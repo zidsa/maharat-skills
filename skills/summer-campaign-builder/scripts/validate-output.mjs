@@ -3,13 +3,13 @@ import path from "node:path";
 
 const outputPath = process.argv[2];
 const requiredSections = [
-  "موجز الحملة",
+  "موجز الحملة ومصادر الفهم",
   "القنوات المختارة",
   "مخرجات القنوات المختارة",
   "خطة القياس",
   "قائمة مراجعة قبل النشر",
 ];
-const unresolvedPatterns = [/\[(?:أدخل|ألصق|اكتب|اسم القناة)[^\]]*\]/g];
+const unresolvedPatterns = [/\[(?:أدخل|ألصق|اكتب|اسم القناة المختارة)[^\]]*\]/g];
 
 if (!outputPath) {
   console.error("الاستخدام: node scripts/validate-output.mjs <مسار-النتيجة.md>");
@@ -34,4 +34,3 @@ if (missing.length || unresolved.length) {
 }
 
 console.log(`✓ الحزمة مكتملة وتحتوي على ${requiredSections.length} أقسام إلزامية.`);
-
