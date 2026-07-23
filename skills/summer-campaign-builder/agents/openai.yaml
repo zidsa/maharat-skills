@@ -1,0 +1,5 @@
+interface:
+  display_name: "باني حملة الصيف"
+  short_description: "يبني حملة صيف حسب العروض والقنوات المختارة"
+  default_prompt: "استخدم $summer-campaign-builder لبناء حملة صيف لمتجري حسب العروض والقنوات التي أختارها."
+
