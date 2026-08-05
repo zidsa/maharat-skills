@@ -1,22 +1,22 @@
-# مهارات زد للتجارة
+# مهارات زد
 
-مستودع عام يضم **203 حزم Agent Skills عربية** للتجارة الإلكترونية، من إعداد عبدالرحمن الناشري.
+المستودع الرسمي لحزم مهارات التجارة الإلكترونية في [مهارات زد](https://skills.zid.sa/). يضم حاليًا **212 حزمة Agent Skills عربية** من إعداد عبدالرحمن الناشري، ومستضافة ضمن منظمة [zidsa](https://github.com/zidsa).
 
-كل مهارة حزمة مستقلة وليست ملف `SKILL.md` فقط. تحتوي الحزمة على عقد تشغيل للوكيل، قالب مخرجات، مراجع للمدخلات والسلامة، مثال استخدام، وأداة تحقق قابلة للتشغيل.
+كل مهارة حزمة مستقلة وليست ملف `SKILL.md` فقط. تحتوي الحزمة على تعليمات التشغيل، وقالب المخرجات، والمراجع، والأمثلة، وأدوات التحقق اللازمة لها.
 
 ## استعراض المهارات
 
 ```bash
-npx skills add abdulrahmanx97/zid-maharat-skills --list
+npx skills add https://github.com/zidsa/maharat-skills --list
 ```
 
 ## تثبيت مهارة واحدة
 
 ```bash
-npx skills add abdulrahmanx97/zid-maharat-skills --skill merchant-lead-01
+npx skills add https://github.com/zidsa/maharat-skills --skill merchant-lead-01
 ```
 
-يمكن استبدال `merchant-lead-01` باسم أي مهارة موجودة داخل مجلد `skills`.
+استبدل `merchant-lead-01` باسم أي مهارة موجودة داخل مجلد `skills`.
 
 ## بنية الحزمة
 
@@ -25,29 +25,31 @@ skills/<skill-name>/
 ├── SKILL.md
 ├── LICENSE.txt
 ├── agents/
-│   └── execution-contract.md
 ├── assets/
-│   └── output-template.md
 ├── examples/
-│   └── example-request.md
 ├── references/
-│   ├── input-checklist.md
-│   └── safety-checklist.md
 └── scripts/
-    └── validate-output.mjs
 ```
+
+قد تختلف الملفات المرافقة بحسب احتياج المهارة، لكن يبقى `SKILL.md` هو نقطة البداية.
 
 ## التحقق من المخرجات
 
-بعد تشغيل المهارة وحفظ النتيجة بصيغة Markdown:
+إذا كانت الحزمة تحتوي على أداة تحقق، شغّلها بعد حفظ النتيجة بصيغة Markdown:
 
 ```bash
-node scripts/validate-output.mjs result.md
+node skills/<skill-name>/scripts/validate-output.mjs result.md
 ```
 
-## الموقع
+## الروابط الرسمية
 
-[تصفح مكتبة مهارات زد](https://zid-maharat-preview.gptalnashri.chatgpt.site/skills)
+- الموقع: [skills.zid.sa](https://skills.zid.sa/)
+- مستودع الموقع: [zidsa/zid-skills](https://github.com/zidsa/zid-skills)
+- مستودع المهارات: [zidsa/maharat-skills](https://github.com/zidsa/maharat-skills)
+
+## المساهمة
+
+افتح طلب دمج يضيف مجلد المهارة كاملًا داخل `skills/`. لا ترسل `SKILL.md` منفردًا إذا كانت المهارة تحتاج مراجع أو أمثلة أو أدوات تحقق.
 
 ## الحقوق
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "راجع أداء البحث المجاني"
+  short_description: "اشرح ما تحسن وما تراجع في Google وحدد فرصًا قابلة للقياس"
+  default_prompt: "قارن فترتين من بيانات Search Console واكتب مراجعة تنفيذية"
