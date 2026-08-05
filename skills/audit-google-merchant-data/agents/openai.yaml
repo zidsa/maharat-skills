@@ -1,0 +1,4 @@
+interface:
+  display_name: "جهّز بيانات منتجات Google"
+  short_description: "راجع بيانات المنتجات المطلوبة للظهور في Google"
+  default_prompt: "افحص بيانات المنتجات واكتب سجل إصلاح مرتب"
