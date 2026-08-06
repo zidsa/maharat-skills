@@ -3,7 +3,7 @@ name: summer-campaign-builder
 description: Build and refine a complete Arabic summer campaign from a merchant's prepared UI report, public store URL, actual offers, and selected channels. Use for summer campaign bundles, public-store brand review, TikTok/Snapchat/Instagram static creative production or prompts, WhatsApp promotional copy, campaign measurement, and final launch checklists.
 ---
 
-# باني حملة الصيف
+# مجهّز حملة الصيف
 
 حوّل تقرير واجهة «حزمة الصيف» إلى حملة جاهزة للمراجعة. احترم اختيارات التاجر حرفيًا، ولا تعِد طرح سؤال حسمته الواجهة.
 
