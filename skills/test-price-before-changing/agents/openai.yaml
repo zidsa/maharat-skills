@@ -1,0 +1,6 @@
+interface:
+  display_name: "اختبر سعرك قبل ما تغيّره"
+  short_description: "قرار سعر وتجربة محدودة تحمي هامش المنتج"
+  default_prompt: "استخدم $test-price-before-changing لمقارنة سعري الحالي مع تجربة محدودة دون تغيير المتجر."
+policy:
+  allow_implicit_invocation: true

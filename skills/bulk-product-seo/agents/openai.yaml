@@ -1,0 +1,6 @@
+interface:
+  display_name: "حسّن صفحات منتجاتك دفعة واحدة"
+  short_description: "معاينة SEO آمنة لدفعة منتجات قبل تعديلها"
+  default_prompt: "استخدم $bulk-product-seo لتحسين أول دفعة من صفحات منتجاتي من حقائق الكتالوج فقط."
+policy:
+  allow_implicit_invocation: true

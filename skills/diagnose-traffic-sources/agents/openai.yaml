@@ -1,0 +1,6 @@
+interface:
+  display_name: "اعرف من وين يجون عملاؤك"
+  short_description: "قارن قنوات الزيارات بلا نسب مبيعات وهمية"
+  default_prompt: "استخدم $diagnose-traffic-sources لتحليل قنوات زيارات متجري وتحديد اختبار واحد للمرحلة التالية."
+policy:
+  allow_implicit_invocation: true

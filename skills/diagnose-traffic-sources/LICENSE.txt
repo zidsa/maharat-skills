@@ -1,0 +1,4 @@
+Copyright © 2026 Abdulrahman Alnashri. All rights reserved.
+
+هذه الحزمة متاحة للاستخدام الشخصي والتشغيلي من المستودع الرسمي zidsa/maharat-skills.
+لا يجوز إعادة بيعها أو إعادة نشرها باسم منشئ آخر دون إذن خطي من صاحب الحقوق.
