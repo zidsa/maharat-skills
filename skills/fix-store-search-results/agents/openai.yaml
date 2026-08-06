@@ -1,0 +1,6 @@
+interface:
+  display_name: "خلّ بحث متجرك يطلع نتائج مناسبة"
+  short_description: "حل كلمات البحث بلا نتائج دون تضليل العميل"
+  default_prompt: "استخدم $fix-store-search-results لتحليل كلمات البحث التي لا يجد العميل لها نتيجة في متجري."
+policy:
+  allow_implicit_invocation: true

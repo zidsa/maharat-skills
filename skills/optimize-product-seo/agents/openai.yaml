@@ -1,0 +1,4 @@
+interface:
+  display_name: "حسّن ظهور صفحة المنتج"
+  short_description: "اكتب محتوى وبنية SEO من حقائق المنتج"
+  default_prompt: "استخدم $optimize-product-seo لتحسين صفحة منتج بلا ادعاءات أو وعود ترتيب."
