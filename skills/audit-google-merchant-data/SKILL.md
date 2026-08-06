@@ -3,7 +3,7 @@ name: audit-google-merchant-data
 description: يفحص اتساق بيانات المنتجات بين المتجر وProduct structured data وMerchant Center بما يشمل السعر والتوفر والمعرفات والشحن والاسترجاع. استخدمه عند أخطاء المنتجات أو قبل تفعيل القوائم المجانية والإعلانات.
 ---
 
-# جهّز بيانات منتجاتك للظهور في Google
+# مدقّق بيانات Google Merchant
 
 استخدم هذه المهارة للوصول إلى نتيجة قابلة للمراجعة، لا لإنتاج نص عام. اقرأ `references/method.md` قبل التنفيذ وارجع إلى `references/source-register.md` عند الحاجة إلى مصدر.
 
@@ -47,4 +47,3 @@ description: يفحص اتساق بيانات المنتجات بين المتج
 - طلب صالح: `examples/example-request.md`
 - نتيجة نموذجية: `examples/example-output.md`
 - طلب يجب رفضه أو تقييده: `examples/blocked-request.md`
-

@@ -3,7 +3,7 @@ name: audit-store-search-indexing
 description: يتحقق من قدرة Google على اكتشاف وفهرسة صفحات المتجر اعتمادًا على أدلة Search Console وملف sitemap وإشارات robots وcanonical. استخدمه عند اختفاء صفحات من نتائج البحث أو زيادة صفحات مستبعدة أو بعد نقل الروابط.
 ---
 
-# تأكد إن Google شايف صفحات متجرك
+# مدقّق فهرسة Google
 
 استخدم هذه المهارة للوصول إلى نتيجة قابلة للمراجعة، لا لإنتاج نص عام. اقرأ `references/method.md` قبل التنفيذ وارجع إلى `references/source-register.md` عند الحاجة إلى مصدر.
 
@@ -47,4 +47,3 @@ description: يتحقق من قدرة Google على اكتشاف وفهرسة ص
 - طلب صالح: `examples/example-request.md`
 - نتيجة نموذجية: `examples/example-output.md`
 - طلب يجب رفضه أو تقييده: `examples/blocked-request.md`
-

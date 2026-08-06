@@ -3,7 +3,7 @@ name: find-organic-content-opportunities
 description: يستخرج فرص محتوى عضوي من بيانات Search Console وأسئلة العملاء وكتالوج المتجر ويرتبها حسب قربها من قرار الشراء. استخدمه لبناء خطة محتوى SEO مرتبطة بمنتجات حقيقية بدل أفكار عامة.
 ---
 
-# اكتشف مواضيع يبحث عنها عملاؤك
+# باحث فرص محتوى SEO
 
 استخدم هذه المهارة للوصول إلى نتيجة قابلة للمراجعة، لا لإنتاج نص عام. اقرأ `references/method.md` قبل التنفيذ وارجع إلى `references/source-register.md` عند الحاجة إلى مصدر.
 
@@ -47,4 +47,3 @@ description: يستخرج فرص محتوى عضوي من بيانات Search Co
 - طلب صالح: `examples/example-request.md`
 - نتيجة نموذجية: `examples/example-output.md`
 - طلب يجب رفضه أو تقييده: `examples/blocked-request.md`
-
