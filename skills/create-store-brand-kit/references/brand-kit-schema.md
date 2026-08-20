@@ -13,7 +13,7 @@
     {
       "id": "merchant-brief",
       "type": "merchant_input",
-      "detail": "الاسم والمجال والجمهور والسمات"
+      "detail": "الاسم وما يبيعه المتجر والتفضيل الاختياري"
     }
   ],
   "directions": [

@@ -51,7 +51,7 @@ function baseManifest(status = "assets_ready") {
     schema_version: 1,
     status,
     store: { name_ar: "اختبار" },
-    source_register: [{ id: "merchant-brief", type: "merchant_input", detail: "الاسم والمجال والجمهور" }],
+    source_register: [{ id: "merchant-brief", type: "merchant_input", detail: "الاسم وما يبيعه المتجر" }],
     directions: [
       { id: "A", summary: "رمز خطي بسيط", score: 18 },
       { id: "B", summary: "رمز هندسي مضغوط", score: 15 },
