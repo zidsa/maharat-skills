@@ -1,0 +1,4 @@
+interface:
+  display_name: "صانع ألوان وصورة شعار المتجر"
+  short_description: "ألوان وصورة شعار PNG وأيقونة جاهزة"
+  default_prompt: "استخدم $create-store-brand-kit لاختيار ألوان مخصصة وإنشاء صورة شعار عربي PNG وأيقونة 32×32 من بيانات متجري."
