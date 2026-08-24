@@ -44,11 +44,12 @@ function writePng(destination, width, height, opaque = false) {
   ]));
 }
 
-const longPrompt = "أنشئ صورة عربية أصلية من الصفر مع الالتزام بالاسم العربي حرفيًا والمقاس المطلوب والخلفية الشفافة الفعلية ومنع الموكاب والعلامة المائية والنصوص الإضافية.";
+const visualAnchor = "رمز هندسي من قوسين متناظرين بسمك ثابت وزوايا مستديرة، الرمز باللون الثانوي والاسم باللون الرئيسي، ويمنع تغيير هذه النسب بين الملفات.";
+const longPrompt = `${visualAnchor} أنشئ صورة عربية أصلية من الصفر مع الالتزام بالاسم العربي حرفيًا والمقاس المطلوب ومنع الموكاب والعلامة المائية والنصوص الإضافية.`;
 
 function baseManifest(status = "assets_ready") {
   return {
-    schema_version: 1,
+    schema_version: 2,
     status,
     store: { name_ar: "اختبار" },
     source_register: [{ id: "merchant-brief", type: "merchant_input", detail: "الاسم وما يبيعه المتجر" }],
@@ -58,6 +59,7 @@ function baseManifest(status = "assets_ready") {
       { id: "C", summary: "علامة حرفية لينة", score: 14 },
     ],
     selected_direction: "A",
+    visual_anchor: visualAnchor,
     palette: {
       primary: "#5A2134",
       on_primary: "#FFFFFF",
@@ -68,14 +70,21 @@ function baseManifest(status = "assets_ready") {
     },
     assets: status === "assets_ready"
       ? {
+        brand_board_png: { file: "brand-board.png", width: 1536, height: 1024 },
         logo_png: { file: "logo-ar.png", width: 1024, height: 256 },
         icon_png: { file: "store-icon.png", width: 32, height: 32 },
       }
       : {},
-    fallback_prompts: { logo_png: longPrompt, icon_png: longPrompt },
+    fallback_prompts: { brand_board_png: longPrompt, logo_png: longPrompt, icon_png: longPrompt },
     qa: {
+      outputs_are_separate_verified: status === "assets_ready",
+      palette_reported_as_text: status === "assets_ready",
+      qa_report_reported_as_text: status === "assets_ready",
+      brand_board_dimensions_verified: status === "assets_ready",
+      visual_consistency_verified: status === "assets_ready",
       arabic_spelling_verified: status === "assets_ready",
-      transparent_background_verified: status === "assets_ready",
+      logo_transparent_background_verified: status === "assets_ready",
+      icon_transparent_background_verified: status === "assets_ready",
       icon_at_32px_verified: status === "assets_ready",
       originality_reviewed: status === "assets_ready",
     },
@@ -87,7 +96,12 @@ const cases = [
   ["valid prompts only", true, () => baseManifest("prompts_only")],
   ["low contrast", false, () => { const x = baseManifest("prompts_only"); x.palette.primary = "#777777"; x.palette.on_primary = "#888888"; return x; }],
   ["missing prompt", false, () => { const x = baseManifest("prompts_only"); x.fallback_prompts.icon_png = "قصير"; return x; }],
+  ["prompt missing shared anchor", false, () => { const x = baseManifest("prompts_only"); x.fallback_prompts.icon_png = "أنشئ أيقونة عربية مستقلة وأصلية بخلفية شفافة ومقاس دقيق وبلا نص إضافي أو موكاب أو علامة مائية، مع التحقق من الملف قبل التسليم."; return x; }],
   ["unverified Arabic", false, () => { const x = baseManifest(); x.qa.arabic_spelling_verified = false; return x; }],
+  ["outputs not separate", false, () => { const x = baseManifest(); x.qa.outputs_are_separate_verified = false; return x; }],
+  ["palette not reported as text", false, () => { const x = baseManifest(); x.qa.palette_reported_as_text = false; return x; }],
+  ["missing brand board", false, () => { const x = baseManifest(); delete x.assets.brand_board_png; return x; }],
+  ["wrong brand board dimensions", false, () => baseManifest(), { boardWidth: 1500 }],
   ["wrong logo dimensions", false, () => baseManifest(), { logoWidth: 1000 }],
   ["opaque icon", false, () => baseManifest(), { opaqueIcon: true }],
 ];
@@ -97,6 +111,7 @@ for (const [name, expected, createManifest, fixture = {}] of cases) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "store-brand-kit-"));
   const manifest = createManifest();
   if (manifest.status === "assets_ready") {
+    writePng(path.join(directory, "brand-board.png"), fixture.boardWidth ?? 1536, 1024, true);
     writePng(path.join(directory, "logo-ar.png"), fixture.logoWidth ?? 1024, 256);
     writePng(path.join(directory, "store-icon.png"), 32, 32, fixture.opaqueIcon ?? false);
   }
