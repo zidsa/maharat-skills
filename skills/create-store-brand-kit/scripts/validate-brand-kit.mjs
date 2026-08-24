@@ -3,322 +3,163 @@ import fs from "node:fs";
 import path from "node:path";
 import { inflateSync } from "node:zlib";
 
-const manifestPath = process.argv[2];
-if (!manifestPath) {
-  console.error("الاستخدام: node scripts/validate-brand-kit.mjs <brand-kit.json>");
-  process.exit(2);
-}
-
-const MAX_BYTES = 1_950_000;
-const HEX = /^#[0-9A-Fa-f]{6}$/;
-const REQUIRED_RASTER_PROMPT_TERMS = ["direct_raster_png", "SVG", "HTML", "Inkscape", "وسيط متجهي"];
+const args = process.argv.slice(2);
+const claudeFallback = args[0] === "--claude-fallback";
+if (claudeFallback) args.shift();
+const [primary, secondary, catalogArg, logoArg, iconArg] = args;
+const ASSET_MAX_BYTES = 1_950_000;
+const CATALOG_MAX_BYTES = 10_000_000;
+const MIN_TRANSPARENT_RATIO = 0.01;
+const LEGACY_FORBIDDEN_ARTIFACTS = new Set(["brand-board.png", "colors-hex.txt", "brand-kit.json", "brand-kit-report.md"]);
+const HEX = /^#[0-9a-f]{6}$/i;
 const errors = [];
-const resolvedManifest = path.resolve(process.cwd(), manifestPath);
-const assetDirectory = path.dirname(resolvedManifest);
 
-let manifest;
-try {
-  manifest = JSON.parse(fs.readFileSync(resolvedManifest, "utf8"));
-} catch (error) {
-  console.error(JSON.stringify({ valid: false, errors: [`تعذر قراءة manifest: ${error.message}`] }, null, 2));
-  process.exit(1);
-}
-
-function luminance(value) {
-  const channels = value
-    .slice(1)
-    .match(/../g)
-    .map((channel) => parseInt(channel, 16) / 255)
-    .map((channel) => channel <= 0.04045
-      ? channel / 12.92
-      : ((channel + 0.055) / 1.055) ** 2.4);
-  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-}
-
-function contrast(first, second) {
-  const a = luminance(first);
-  const b = luminance(second);
-  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-}
-
-function checkContrast(label, foreground, background, minimum) {
-  if (!HEX.test(foreground || "") || !HEX.test(background || "")) return;
-  const ratio = contrast(foreground, background);
-  if (ratio < minimum) {
-    errors.push(`${label}: ${ratio.toFixed(3)}:1 أقل من ${minimum}:1`);
+function fail(message) { errors.push(message); }
+function crc32(data) {
+  let crc = 0xffffffff;
+  for (const byte of data) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
   }
+  return (crc ^ 0xffffffff) >>> 0;
 }
-
-function paeth(a, b, c) {
-  const prediction = a + b - c;
-  const distanceA = Math.abs(prediction - a);
-  const distanceB = Math.abs(prediction - b);
-  const distanceC = Math.abs(prediction - c);
-  if (distanceA <= distanceB && distanceA <= distanceC) return a;
-  if (distanceB <= distanceC) return b;
-  return c;
-}
-
-function inspectPng(filePath, expectedWidth, expectedHeight, { requireTransparency, maxBytes }) {
-  const data = fs.readFileSync(filePath);
+function pngInfo(file, width, height, { requiresAlpha, maxBytes }) {
+  const bytes = fs.statSync(file).size;
+  if (bytes > maxBytes) throw new Error(`الحجم ${bytes} يتجاوز ${maxBytes}`);
+  const data = fs.readFileSync(file);
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-  if (data.length < 33 || !data.subarray(0, 8).equals(signature)) {
-    throw new Error("الملف ليس PNG صالحًا");
-  }
-  if (maxBytes && data.length > maxBytes) {
-    throw new Error(`الحجم ${data.length} بايت يتجاوز ${maxBytes}`);
-  }
-
-  let offset = 8;
-  let header;
-  const imageData = [];
+  if (!data.subarray(0, 8).equals(signature)) throw new Error("ليس PNG صالحًا");
+  let offset = 8; let header; const ids = []; let ended = false; let sawIdat = false; let idatClosed = false;
   while (offset + 12 <= data.length) {
-    const length = data.readUInt32BE(offset);
-    const type = data.toString("ascii", offset + 4, offset + 8);
-    const chunkStart = offset + 8;
-    const chunkEnd = chunkStart + length;
-    if (chunkEnd + 4 > data.length) throw new Error("بنية PNG مقطوعة");
-    const chunk = data.subarray(chunkStart, chunkEnd);
-    if (type === "IHDR") header = chunk;
-    if (type === "IDAT") imageData.push(chunk);
-    offset = chunkEnd + 4;
-    if (type === "IEND") break;
+    const length = data.readUInt32BE(offset); const type = data.toString("ascii", offset + 4, offset + 8);
+    const start = offset + 8; const end = start + length;
+    if (end + 4 > data.length) throw new Error("PNG مقطوع");
+    const chunk = data.subarray(start, end); const storedCrc = data.readUInt32BE(end);
+    if (crc32(Buffer.concat([Buffer.from(type, "ascii"), chunk])) !== storedCrc) throw new Error(`CRC غير صالح في ${type}`);
+    if (!/^[A-Za-z]{4}$/u.test(type) || type[2] !== type[2].toUpperCase()) throw new Error("نوع chunk في PNG غير صالح أو يحمل reserved bit");
+    if (!header && type !== "IHDR") throw new Error("يجب أن يكون IHDR أول chunk");
+    if (type === "IHDR") { if (header || length !== 13) throw new Error("IHDR غير صالح أو مكرر"); header = chunk; }
+    else if (type === "IDAT") { if (idatClosed) throw new Error("IDAT يجب أن تكون متجاورة"); sawIdat = true; ids.push(chunk); }
+    else if (type === "tRNS") throw new Error("tRNS غير مدعوم في PNG المدعوم");
+    else if (type === "IEND") { if (!sawIdat || length !== 0 || ended) throw new Error("IEND غير صالح"); ended = true; offset = end + 4; break; }
+    else { if (sawIdat) idatClosed = true; if (/^[A-Z]/u.test(type)) throw new Error(`chunk حرج غير مدعوم: ${type}`); }
+    offset = end + 4;
   }
-
-  if (!header || header.length !== 13 || !imageData.length) {
-    throw new Error("PNG يفتقد IHDR أو IDAT");
-  }
-
-  const width = header.readUInt32BE(0);
-  const height = header.readUInt32BE(4);
-  const bitDepth = header[8];
-  const colorType = header[9];
-  const compression = header[10];
-  const filter = header[11];
-  const interlace = header[12];
-  if (width !== expectedWidth || height !== expectedHeight) {
-    throw new Error(`المقاس ${width}×${height}، المطلوب ${expectedWidth}×${expectedHeight}`);
-  }
-  const supportedColorTypes = requireTransparency ? [4, 6] : [0, 2, 4, 6];
-  if (bitDepth !== 8 || !supportedColorTypes.includes(colorType) || compression !== 0 || filter !== 0 || interlace !== 0) {
-    const alphaRequirement = requireTransparency ? " مع قناة alpha" : "";
-    throw new Error(`يلزم PNG غير متداخل 8-bit${alphaRequirement}`);
-  }
-
-  const bytesPerPixel = { 0: 1, 2: 3, 4: 2, 6: 4 }[colorType];
-  const alphaOffset = colorType === 6 ? 3 : colorType === 4 ? 1 : null;
-  const stride = width * bytesPerPixel;
-  const raw = inflateSync(Buffer.concat(imageData));
-  if (raw.length !== (stride + 1) * height) {
-    throw new Error("حجم بيانات PNG المفكوكة غير متوقع");
-  }
-
-  let previous = Buffer.alloc(stride);
-  let rawOffset = 0;
-  let hasTransparentPixel = false;
-  let hasVisiblePixel = alphaOffset === null;
-  for (let y = 0; y < height; y += 1) {
-    const filterType = raw[rawOffset];
-    rawOffset += 1;
-    const row = Buffer.alloc(stride);
-    for (let x = 0; x < stride; x += 1) {
-      const encoded = raw[rawOffset + x];
-      const left = x >= bytesPerPixel ? row[x - bytesPerPixel] : 0;
-      const up = previous[x];
-      const upLeft = x >= bytesPerPixel ? previous[x - bytesPerPixel] : 0;
-      let predictor;
-      if (filterType === 0) predictor = 0;
-      else if (filterType === 1) predictor = left;
-      else if (filterType === 2) predictor = up;
-      else if (filterType === 3) predictor = Math.floor((left + up) / 2);
-      else if (filterType === 4) predictor = paeth(left, up, upLeft);
-      else throw new Error(`مرشح PNG غير مدعوم: ${filterType}`);
-      row[x] = (encoded + predictor) & 255;
-    }
-    if (alphaOffset !== null) {
-      for (let x = alphaOffset; x < stride; x += bytesPerPixel) {
-        if (row[x] === 0) hasTransparentPixel = true;
-        if (row[x] > 0) hasVisiblePixel = true;
+  if (!header || !ids.length || !ended || offset !== data.length) throw new Error("PNG يفتقد IEND صالحًا أو يحتوي بيانات لاحقة");
+  const actualWidth = header.readUInt32BE(0); const actualHeight = header.readUInt32BE(4);
+  const bitDepth = header[8]; const type = header[9];
+  if (actualWidth !== width || actualHeight !== height) throw new Error(`المقاس ${actualWidth}x${actualHeight}، المطلوب ${width}x${height}`);
+  if (bitDepth !== 8 || (requiresAlpha ? type !== 6 : ![2, 6].includes(type)) || header[10] || header[11] || header[12]) throw new Error(requiresAlpha ? "يلزم PNG RGBA 8-bit غير متداخل" : "يلزم PNG RGB أو RGBA 8-bit غير متداخل");
+  const bpp = type === 6 ? 4 : 3; const stride = actualWidth * bpp; const expectedRawBytes = (stride + 1) * actualHeight;
+  const raw = inflateSync(Buffer.concat(ids), { maxOutputLength: expectedRawBytes });
+  if (raw.length !== expectedRawBytes) throw new Error("بيانات PNG غير متوقعة");
+  let previous = Buffer.alloc(stride); let pos = 0; let transparentPixels = 0; let visible = false; const cornersTransparent = [false, false, false, false];
+  const paeth = (a, b, c) => { const p = a + b - c; const pa = Math.abs(p - a); const pb = Math.abs(p - b); const pc = Math.abs(p - c); return pa <= pb && pa <= pc ? a : pb <= pc ? b : c; };
+  for (let y = 0; y < actualHeight; y += 1) {
+    const filter = raw[pos++]; const row = Buffer.alloc(stride);
+    for (let x = 0; x < stride; x += 1) { const left = x >= bpp ? row[x - bpp] : 0; const up = previous[x]; const ul = x >= bpp ? previous[x - bpp] : 0; const p = filter === 0 ? 0 : filter === 1 ? left : filter === 2 ? up : filter === 3 ? Math.floor((left + up) / 2) : filter === 4 ? paeth(left, up, ul) : null; if (p === null) throw new Error("مرشح PNG غير مدعوم"); row[x] = (raw[pos + x] + p) & 255; }
+    pos += stride;
+    if (type === 2) visible = true;
+    else for (let x = 0; x < actualWidth; x += 1) {
+      const alpha = row[x * bpp + bpp - 1];
+      visible ||= alpha > 0;
+      if (alpha === 0) {
+        transparentPixels += 1;
+        if (x === 0 && y === 0) cornersTransparent[0] = true;
+        if (x === actualWidth - 1 && y === 0) cornersTransparent[1] = true;
+        if (x === 0 && y === actualHeight - 1) cornersTransparent[2] = true;
+        if (x === actualWidth - 1 && y === actualHeight - 1) cornersTransparent[3] = true;
       }
     }
-    rawOffset += stride;
     previous = row;
   }
-
-  if (requireTransparency && !hasTransparentPixel) throw new Error("لا توجد بكسلات شفافة فعلية");
-  if (!hasVisiblePixel) throw new Error("الصورة شفافة كليًا وبلا محتوى مرئي");
-  return {
-    width,
-    height,
-    bytes: data.length,
-    has_alpha: alphaOffset !== null,
-    has_transparent_pixel: hasTransparentPixel,
-    has_visible_pixel: hasVisiblePixel,
-  };
+  if (!visible) throw new Error("يلزم بكسلات مرئية فعلية");
+  if (requiresAlpha && (!cornersTransparent.every(Boolean) || transparentPixels / (actualWidth * actualHeight) < MIN_TRANSPARENT_RATIO)) throw new Error("يلزم خلفية شفافة فعلية: الأركان الأربعة شفافة و1% على الأقل من البكسلات alpha=0");
+  return { width: actualWidth, height: actualHeight, bytes: data.length };
 }
 
-if (manifest.schema_version !== 3) errors.push("schema_version يجب أن يساوي 3");
-if (!["assets_ready", "prompts_only"].includes(manifest.status)) errors.push("status غير صالح");
-if (!manifest.store?.name_ar?.trim()) errors.push("store.name_ar مطلوب");
+const commonSvgAttributes = ["id", "transform", "fill", "fill-opacity", "fill-rule", "stroke", "stroke-width", "stroke-opacity", "stroke-linecap", "stroke-linejoin", "opacity", "clip-path", "clip-rule", "mask"];
+const svgAttributes = new Map([
+  ["svg", new Set(["width", "height", "viewBox", "xmlns"])],
+  ["defs", new Set(["id"])], ["g", new Set(commonSvgAttributes)], ["path", new Set([...commonSvgAttributes, "d"])],
+  ["rect", new Set([...commonSvgAttributes, "x", "y", "width", "height", "rx", "ry"])], ["circle", new Set([...commonSvgAttributes, "cx", "cy", "r"])],
+  ["ellipse", new Set([...commonSvgAttributes, "cx", "cy", "rx", "ry"])], ["line", new Set([...commonSvgAttributes, "x1", "y1", "x2", "y2"])],
+  ["polyline", new Set([...commonSvgAttributes, "points"])], ["polygon", new Set([...commonSvgAttributes, "points"])],
+  ["text", new Set([...commonSvgAttributes, "x", "y", "dx", "dy", "text-anchor", "font-size", "font-weight", "font-family", "letter-spacing"])],
+  ["tspan", new Set([...commonSvgAttributes, "x", "y", "dx", "dy", "text-anchor", "font-size", "font-weight", "font-family", "letter-spacing"])],
+  ["linearGradient", new Set(["id", "x1", "y1", "x2", "y2", "gradientUnits", "gradientTransform"])], ["radialGradient", new Set(["id", "cx", "cy", "r", "fx", "fy", "gradientUnits", "gradientTransform"])],
+  ["stop", new Set(["offset", "stop-color", "stop-opacity"])], ["clipPath", new Set(["id", "clipPathUnits", "transform"])],
+  ["mask", new Set(["id", "x", "y", "width", "height", "maskUnits", "maskContentUnits", "transform"])],
+]);
+const localReferenceAttributes = new Set(["fill", "stroke", "clip-path", "mask"]);
 
-const production = manifest.production || {};
-if (production.pipeline !== "direct_raster_png") {
-  errors.push("production.pipeline يجب أن يساوي direct_raster_png؛ يُمنع أي مسار SVG أو HTML أو متجهي");
-}
-if (typeof production.image_generation_used !== "boolean") {
-  errors.push("production.image_generation_used يجب أن يكون true أو false");
-}
-for (const key of [
-  "svg_used",
-  "html_used",
-  "inkscape_used",
-  "vector_intermediate_used",
-  "conversion_to_png_used",
-]) {
-  if (production[key] !== false) {
-    errors.push(`production.${key} يجب أن يساوي false؛ هذه الطريقة محظورة في جميع المراحل`);
-  }
-}
-
-const arabicAttempts = production.arabic_generation_attempts;
-if (!Number.isInteger(arabicAttempts) || arabicAttempts < 0 || arabicAttempts > 3) {
-  errors.push("production.arabic_generation_attempts يجب أن يكون عددًا صحيحًا من 0 إلى 3");
-} else if (production.image_generation_used !== (arabicAttempts > 0)) {
-  errors.push("production.image_generation_used يجب أن يطابق وجود محاولات توليد عربية فعلية");
-}
-if (manifest.status === "assets_ready" && production.image_generation_used !== true) {
-  errors.push("assets_ready يتطلب توليد/تحرير صورة Raster مباشر فعليًا");
-}
-
-for (const entry of fs.readdirSync(assetDirectory, { withFileTypes: true })) {
-  if (!entry.isFile()) continue;
-  const extension = path.extname(entry.name).toLowerCase();
-  if ([".svg", ".svgz", ".html", ".htm"].includes(extension)) {
-    errors.push(`${entry.name}: ملف محظور داخل حزمة الهوية؛ لا تستخدم SVG أو HTML حتى كوسيط`);
-  }
-}
-
-if (!Array.isArray(manifest.source_register) || manifest.source_register.length === 0) {
-  errors.push("source_register مطلوب");
-} else {
-  const sourceIds = new Set();
-  for (const source of manifest.source_register) {
-    if (!source.id || sourceIds.has(source.id)) errors.push("مصدر مكرر أو بلا معرف");
-    sourceIds.add(source.id);
-    if (!["merchant_input", "public_url", "artifact"].includes(source.type)) errors.push(`${source.id || "source"}: type غير صالح`);
-    if (source.type === "public_url" && !/^https:\/\/\S+$/.test(source.url || "")) errors.push(`${source.id}: رابط HTTPS مطلوب`);
-    if (source.type !== "public_url" && !source.detail?.trim()) errors.push(`${source.id}: detail مطوب`);
-  }
-}
-
-if (!Array.isArray(manifest.directions) || manifest.directions.length !== 3) {
-  errors.push("directions يجب أن تحتوي ثلاثة اتجاهات");
-} else {
-  const directionIds = new Set();
-  for (const direction of manifest.directions) {
-    if (!direction.id || directionIds.has(direction.id)) errors.push("اتجاه مكرر أو بلا معرف");
-    directionIds.add(direction.id);
-    if (!direction.summary?.trim() || !Number.isFinite(direction.score)) errors.push(`${direction.id || "direction"}: summary وscore مطلوبان`);
-  }
-  if (!directionIds.has(manifest.selected_direction)) errors.push("selected_direction لا يشير إلى اتجاه موجود");
-}
-
-const visualAnchor = manifest.visual_anchor?.trim() || "";
-if (visualAnchor.length < 80) {
-  errors.push("visual_anchor يجب أن يكون وصفًا مشتركًا من 80 حرفًا على الأقل");
-}
-
-const paletteKeys = ["primary", "on_primary", "secondary", "on_secondary", "background", "on_background"];
-for (const key of paletteKeys) {
-  if (!HEX.test(manifest.palette?.[key] || "")) errors.push(`palette.${key} يجب أن يكون HEX من ست خانات`);
-}
-if (manifest.palette?.primary?.toUpperCase() === manifest.palette?.secondary?.toUpperCase()) {
-  errors.push("اللونان الرئيسي والثانوي متطابقان");
-}
-
-if (paletteKeys.every((key) => HEX.test(manifest.palette?.[key] || ""))) {
-  checkContrast("نص الرئيسي", manifest.palette.on_primary, manifest.palette.primary, 4.5);
-  checkContrast("نص الثانوي", manifest.palette.on_secondary, manifest.palette.secondary, 4.5);
-  checkContrast("نص الخلفية", manifest.palette.on_background, manifest.palette.background, 4.5);
-  checkContrast("الرئيسي مع الخلفية", manifest.palette.primary, manifest.palette.background, 3);
-  checkContrast("الثانوي مع الخلفية", manifest.palette.secondary, manifest.palette.background, 3);
-}
-
-for (const key of ["brand_board_png", "logo_png", "icon_png"]) {
-  const prompt = manifest.fallback_prompts?.[key]?.trim() || "";
-  if (prompt.length < 120) {
-    errors.push(`fallback_prompts.${key} يجب أن يكون برومبتًا كاملًا`);
-  }
-  if (visualAnchor && !prompt.includes(visualAnchor)) {
-    errors.push(`fallback_prompts.${key} يجب أن يحتوي visual_anchor نفسه حرفيًا`);
-  }
-  for (const term of REQUIRED_RASTER_PROMPT_TERMS) {
-    if (!prompt.includes(term)) {
-      errors.push(`fallback_prompts.${key} يجب أن يذكر منع طرق الإنتاج المحظورة صراحةً: ${term}`);
-    }
-  }
-}
-
-const inspectedAssets = {};
-if (manifest.status === "assets_ready") {
-  const requiredQa = [
-    "direct_raster_pipeline_verified",
-    "outputs_are_separate_verified",
-    "palette_reported_as_text",
-    "qa_report_reported_as_text",
-    "brand_board_dimensions_verified",
-    "visual_consistency_verified",
-    "arabic_spelling_verified",
-    "arabic_text_inside_logo_verified",
-    "logo_transparent_background_verified",
-    "icon_transparent_background_verified",
-    "icon_at_32px_verified",
-    "originality_reviewed",
-  ];
-  for (const key of requiredQa) {
-    if (manifest.qa?.[key] !== true) errors.push(`qa.${key} يجب أن يساوي true في assets_ready`);
-  }
-
-  const expectedAssets = [
-    ["brand_board_png", 1536, 1024, "brand-board.png", false, null],
-    ["logo_png", 1024, 256, "logo-ar.png", true, MAX_BYTES],
-    ["icon_png", 32, 32, "store-icon.png", true, MAX_BYTES],
-  ];
-  const assetNames = new Set();
-  for (const [key, width, height, expectedName, requireTransparency, maxBytes] of expectedAssets) {
-    const asset = manifest.assets?.[key];
-    if (!asset) {
-      errors.push(`assets.${key} مطلوب`);
+function svgInfo(file, width, height, maxBytes) {
+  if (fs.statSync(file).size > maxBytes) throw new Error(`الحجم يتجاوز ${maxBytes}`);
+  const source = fs.readFileSync(file, "utf8").trim();
+  if (!/^<svg\b[\s\S]*<\/svg>$/u.test(source) || /[&\\]/u.test(source) || /<!(?:DOCTYPE|ENTITY|\[CDATA\[)|<\?/iu.test(source)) throw new Error("ليس SVG آمنًا قائمًا بذاته");
+  const stack = []; const ids = new Set(); const references = []; const tokens = /<[^>]*>/gu; let previous = 0; let match;
+  while ((match = tokens.exec(source))) {
+    const text = source.slice(previous, match.index);
+    if (text.includes("<") || (text.trim() && !stack.some((element) => element === "text" || element === "tspan"))) throw new Error("نص SVG خارج عنصر نصي أو XML غير صالح");
+    const token = match[0]; previous = tokens.lastIndex;
+    if (/^<\//u.test(token)) {
+      const name = token.match(/^<\/([A-Za-z][\w:-]*)\s*>$/u)?.[1];
+      if (!name || stack.pop() !== name) throw new Error("تداخل XML غير صالح");
       continue;
     }
-    if (asset.file !== expectedName || path.basename(asset.file) !== asset.file) {
-      errors.push(`assets.${key}.file يجب أن يساوي ${expectedName}`);
-      continue;
+    const selfClosing = /\/\s*>$/u.test(token); const open = token.match(/^<([A-Za-z][\w:-]*)([\s\S]*?)(?:\/\s*)?>$/u);
+    if (!open || !svgAttributes.has(open[1]) || (open[1] === "svg" && (stack.length || match.index !== 0))) throw new Error("عنصر SVG غير مسموح");
+    const [name, attributeText] = [open[1], open[2]]; const attributes = new Set(); let offset = 0;
+    while (offset < attributeText.length) {
+      const whitespace = attributeText.slice(offset).match(/^\s+/u); if (whitespace) { offset += whitespace[0].length; continue; }
+      const attribute = attributeText.slice(offset).match(/^([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/u);
+      if (!attribute) throw new Error("خاصية SVG غير صالحة أو بلا اقتباس");
+      const attributeName = attribute[1]; const value = attribute[2] ?? attribute[3] ?? "";
+      if (attributes.has(attributeName) || !svgAttributes.get(name).has(attributeName) || /[<>&\\]/u.test(value) || /^on/i.test(attributeName) || /^(?:href|xlink:href|style)$/iu.test(attributeName)) throw new Error("خاصية SVG غير مسموحة أو مكررة");
+      attributes.add(attributeName); offset += attribute[0].length;
+      if (attributeName === "id") { if (!/^[A-Za-z_][\w:.-]*$/u.test(value) || ids.has(value)) throw new Error("معرف SVG غير صالح أو مكرر"); ids.add(value); }
+      if (/url\s*\(/iu.test(value)) {
+        const localReference = value.match(/^url\(\s*#([A-Za-z_][\w:.-]*)\s*\)$/u)?.[1];
+        if (!localReference || !localReferenceAttributes.has(attributeName)) throw new Error("url() يجب أن يشير إلى معرف محلي مسموح");
+        references.push(localReference);
+      }
     }
-    if (assetNames.has(asset.file)) errors.push(`${asset.file}: اسم الملف مكرر والمخرجات يجب أن تكون مستقلة`);
-    assetNames.add(asset.file);
-    if (asset.width !== width || asset.height !== height) errors.push(`assets.${key}: مقاس manifest غير صحيح`);
-    const filePath = path.join(assetDirectory, asset.file);
-    if (!fs.existsSync(filePath)) {
-      errors.push(`${asset.file}: الصورة مفقودة`);
-      continue;
+    if (name === "svg" && (attributes.size !== 4 || !attributes.has("width") || !attributes.has("height") || !attributes.has("viewBox") || !attributes.has("xmlns"))) throw new Error("خصائص svg الجذر غير مكتملة");
+    if (name === "svg") {
+      const root = Object.fromEntries([...attributes].map((key) => [key, attributeText.match(new RegExp(`\\b${key}\\s*=\\s*["']([^"']*)["']`, "u"))?.[1]]));
+      if (root.width !== String(width) || root.height !== String(height) || root.viewBox !== `0 0 ${width} ${height}` || root.xmlns !== "http://www.w3.org/2000/svg") throw new Error("العرض أو الارتفاع أو viewBox أو xmlns غير مطابق");
     }
-    try {
-      inspectedAssets[key] = inspectPng(filePath, width, height, { requireTransparency, maxBytes });
-    } catch (error) {
-      errors.push(`${asset.file}: ${error.message}`);
-    }
+    if (!selfClosing) stack.push(name);
   }
-} else if (manifest.assets && Object.keys(manifest.assets).length > 0) {
-  errors.push("prompts_only يجب أن يحتوي assets فارغًا لمنع ادعاء وجود صور");
+  const trailing = source.slice(previous); if (trailing.includes("<") || trailing.trim() || stack.length) throw new Error("بنية XML غير مكتملة");
+  for (const id of references) if (!ids.has(id)) throw new Error(`مرجع محلي مفقود: #${id}`);
+  return { width, height, bytes: Buffer.byteLength(source) };
 }
 
-console.log(JSON.stringify({
-  valid: errors.length === 0,
-  status: manifest.status,
-  ready_for_upload: errors.length === 0 && manifest.status === "assets_ready",
-  inspected_assets: inspectedAssets,
-  errors,
-}, null, 2));
+if (args.some((arg) => arg.startsWith("--"))) fail("علم غير معروف؛ العلم الوحيد المسموح هو --claude-fallback قبل الوسائط");
+if (![primary, secondary, catalogArg, logoArg, iconArg].every(Boolean) || args.length !== 5) fail("الاستخدام: node scripts/validate-brand-kit.mjs [--claude-fallback] <primary-hex> <secondary-hex> <catalog-asset> <logo-asset> <icon-asset>");
+if (primary && !HEX.test(primary)) fail("Primary يجب أن يكون HEX من ست خانات");
+if (secondary && !HEX.test(secondary)) fail("Secondary يجب أن يكون HEX من ست خانات");
+if (primary?.toLowerCase() === secondary?.toLowerCase()) fail("Primary وSecondary يجب أن يكونا مختلفين");
 
-if (errors.length) process.exit(1);
+let mode; let directory; const inspected = {};
+if (catalogArg && logoArg && iconArg) {
+  const catalog = path.resolve(catalogArg); const logo = path.resolve(logoArg); const icon = path.resolve(iconArg); directory = path.dirname(catalog);
+  if (path.dirname(logo) !== directory || path.dirname(icon) !== directory) fail("يجب أن تكون الصور الثلاث في مجلد تسليم واحد");
+  const ext = path.extname(catalog).toLowerCase(); const logoExt = path.extname(logo).toLowerCase(); const iconExt = path.extname(icon).toLowerCase();
+  if (![".png", ".svg"].includes(ext) || ext !== logoExt || ext !== iconExt) fail("يلزم ثلاثية PNG أو ثلاثية SVG متطابقة، دون خلط الصيغ");
+  else {
+    mode = ext.slice(1);
+    if (mode === "svg" && !claudeFallback) fail("SVG يتطلب --claude-fallback لاستثناء Claude فقط");
+    if (mode === "png" && claudeFallback) fail("--claude-fallback مخصص لثلاثية SVG فقط");
+    const expected = mode === "png" ? ["brand-catalog.png", "logo-ar.png", "store-icon.png"] : ["brand-catalog.svg", "logo-ar.svg", "store-icon.svg"];
+    if ([path.basename(catalog), path.basename(logo), path.basename(icon)].some((name, index) => name !== expected[index])) fail(`الأسماء المطلوبة: ${expected.join(" و ")}`);
+    try { inspected.catalog = mode === "png" ? pngInfo(catalog, 1536, 1024, { requiresAlpha: false, maxBytes: CATALOG_MAX_BYTES }) : svgInfo(catalog, 1536, 1024, CATALOG_MAX_BYTES); } catch (error) { fail(`catalog: ${error.message}`); }
+    try { inspected.logo = mode === "png" ? pngInfo(logo, 1024, 256, { requiresAlpha: true, maxBytes: ASSET_MAX_BYTES }) : svgInfo(logo, 1024, 256, ASSET_MAX_BYTES); } catch (error) { fail(`logo: ${error.message}`); }
+    try { inspected.icon = mode === "png" ? pngInfo(icon, 32, 32, { requiresAlpha: true, maxBytes: ASSET_MAX_BYTES }) : svgInfo(icon, 32, 32, ASSET_MAX_BYTES); } catch (error) { fail(`icon: ${error.message}`); }
+    if (fs.existsSync(directory)) for (const entry of fs.readdirSync(directory, { withFileTypes: true })) if (entry.isFile() && LEGACY_FORBIDDEN_ARTIFACTS.has(entry.name)) fail(`${entry.name}: أثر قديم محظور`);
+  }
+}
+
+console.log(JSON.stringify({ valid: errors.length === 0, mode: mode || null, inspected_assets: inspected, errors }, null, 2));
+process.exitCode = errors.length ? 1 : 0;
