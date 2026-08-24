@@ -1,159 +1,57 @@
-#!/usr/bin/env node
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import { deflateSync } from "node:zlib";
+import { spawnSync } from "node:child_process";
 
-const validatorPath = fileURLToPath(new URL("./validate-brand-kit.mjs", import.meta.url));
-
-function pngChunk(type, payload) {
-  const chunk = Buffer.alloc(12 + payload.length);
-  chunk.writeUInt32BE(payload.length, 0);
-  chunk.write(type, 4, 4, "ascii");
-  payload.copy(chunk, 8);
-  return chunk;
-}
-
-function writePng(destination, width, height, opaque = false) {
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(width, 0);
-  header.writeUInt32BE(height, 4);
-  header[8] = 8;
-  header[9] = 6;
-  const stride = width * 4;
-  const raw = Buffer.alloc((stride + 1) * height);
-  for (let y = 0; y < height; y += 1) {
-    const rowStart = y * (stride + 1);
-    raw[rowStart] = 0;
-    for (let x = 0; x < width; x += 1) {
-      const pixel = rowStart + 1 + x * 4;
-      raw[pixel] = 90;
-      raw[pixel + 1] = 33;
-      raw[pixel + 2] = 52;
-      raw[pixel + 3] = opaque || (x > width / 4 && x < width * 0.75 && y > height / 4 && y < height * 0.75) ? 255 : 0;
-    }
-  }
-  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-  fs.writeFileSync(destination, Buffer.concat([
-    signature,
-    pngChunk("IHDR", header),
-    pngChunk("IDAT", deflateSync(raw)),
-    pngChunk("IEND", Buffer.alloc(0)),
-  ]));
-}
-
-const visualAnchor = "رمز هندسي من قوسين متناظرين بسمك ثابت وزوايا مستديرة، الرمز باللون الثانوي والاسم باللون الرئيسي، ويمنع تغيير هذه النسب بين الملفات.";
-const rasterRule = "مسار الإنتاج: direct_raster_png فقط؛ يمنع SVG وHTML وInkscape وأي وسيط متجهي في جميع المراحل.";
-const longPrompt = `${visualAnchor} ${rasterRule} أنشئ صورة عربية أصلية من الصفر مع الالتزام بالاسم العربي حرفيًا والمقاس المطلوب ومنع الموكاب والعلامة المائية والنصوص الإضافية.`;
-
-function baseManifest(status = "assets_ready") {
-  return {
-    schema_version: 3,
-    status,
-    store: { name_ar: "اختبار" },
-    source_register: [{ id: "merchant-brief", type: "merchant_input", detail: "الاسم وما يبيعه المتجر" }],
-    directions: [
-      { id: "A", summary: "رمز خطي بسيط", score: 18 },
-      { id: "B", summary: "رمز هندسي مضغوط", score: 15 },
-      { id: "C", summary: "علامة حرفية لينة", score: 14 },
-    ],
-    selected_direction: "A",
-    visual_anchor: visualAnchor,
-    production: {
-      pipeline: "direct_raster_png",
-      image_generation_used: status === "assets_ready",
-      svg_used: false,
-      html_used: false,
-      inkscape_used: false,
-      vector_intermediate_used: false,
-      conversion_to_png_used: false,
-      arabic_generation_attempts: status === "assets_ready" ? 1 : 0,
-    },
-    palette: {
-      primary: "#5A2134",
-      on_primary: "#FFFFFF",
-      secondary: "#8C4517",
-      on_secondary: "#FFFFFF",
-      background: "#FFFDF8",
-      on_background: "#1C1917",
-    },
-    assets: status === "assets_ready"
-      ? {
-        brand_board_png: { file: "brand-board.png", width: 1536, height: 1024 },
-        logo_png: { file: "logo-ar.png", width: 1024, height: 256 },
-        icon_png: { file: "store-icon.png", width: 32, height: 32 },
-      }
-      : {},
-    fallback_prompts: { brand_board_png: longPrompt, logo_png: longPrompt, icon_png: longPrompt },
-    qa: {
-      direct_raster_pipeline_verified: status === "assets_ready",
-      outputs_are_separate_verified: status === "assets_ready",
-      palette_reported_as_text: status === "assets_ready",
-      qa_report_reported_as_text: status === "assets_ready",
-      brand_board_dimensions_verified: status === "assets_ready",
-      visual_consistency_verified: status === "assets_ready",
-      arabic_spelling_verified: status === "assets_ready",
-      arabic_text_inside_logo_verified: status === "assets_ready",
-      logo_transparent_background_verified: status === "assets_ready",
-      icon_transparent_background_verified: status === "assets_ready",
-      icon_at_32px_verified: status === "assets_ready",
-      originality_reviewed: status === "assets_ready",
-    },
-  };
-}
-
+const validator = path.resolve("skills/create-store-brand-kit/scripts/validate-brand-kit.mjs");
+function crc32(data) { let crc = 0xffffffff; for (const byte of data) { crc ^= byte; for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0); } return (crc ^ 0xffffffff) >>> 0; }
+function chunk(type, payload) { const out = Buffer.alloc(payload.length + 12); out.writeUInt32BE(payload.length, 0); out.write(type, 4); payload.copy(out, 8); out.writeUInt32BE(crc32(Buffer.concat([Buffer.from(type), payload])), payload.length + 8); return out; }
+function pngWithRaw(file, width, height, raw) { const hdr = Buffer.alloc(13); hdr.writeUInt32BE(width); hdr.writeUInt32BE(height, 4); hdr[8] = 8; hdr[9] = 6; fs.writeFileSync(file, Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]), chunk("IHDR", hdr), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))])); }
+function png(file, width, height, opaque = false) { const raw = Buffer.alloc((width * 4 + 1) * height); for (let y = 0; y < height; y += 1) { const row = y * (width * 4 + 1); for (let x = 0; x < width; x += 1) { const p = row + 1 + x * 4; raw[p] = 90; raw[p + 1] = 33; raw[p + 2] = 52; raw[p + 3] = opaque || (x > 0 && y > 0) ? 255 : 0; } } pngWithRaw(file, width, height, raw); }
+function pngRgb(file, width, height) { const raw = Buffer.alloc((width * 3 + 1) * height); for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) raw[y * (width * 3 + 1) + 1 + x * 3] = 90; const hdr = Buffer.alloc(13); hdr.writeUInt32BE(width); hdr.writeUInt32BE(height, 4); hdr[8] = 8; hdr[9] = 2; fs.writeFileSync(file, Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]), chunk("IHDR", hdr), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))])); }
+function pngFullyTransparent(file, width, height) { const raw = Buffer.alloc((width * 4 + 1) * height); for (let y = 0; y < height; y += 1) { const row = y * (width * 4 + 1); for (let x = 0; x < width; x += 1) raw[row + 1 + x * 4] = 90; } pngWithRaw(file, width, height, raw); }
+function padPng(file, bytes) { const data = fs.readFileSync(file); fs.writeFileSync(file, Buffer.concat([data.subarray(0, -12), chunk("abCD", Buffer.alloc(bytes)), data.subarray(-12)])); }
+function svg(width, height, body = '<path d="M2 2h8v8H2z" fill="#5A2134"/>') { return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`; }
 const cases = [
-  ["valid assets", true, () => baseManifest()],
-  ["valid prompts only", true, () => baseManifest("prompts_only")],
-  ["valid prompts after rejected raster attempts", true, () => { const x = baseManifest("prompts_only"); x.production.image_generation_used = true; x.production.arabic_generation_attempts = 3; return x; }],
-  ["low contrast", false, () => { const x = baseManifest("prompts_only"); x.palette.primary = "#777777"; x.palette.on_primary = "#888888"; return x; }],
-  ["missing prompt", false, () => { const x = baseManifest("prompts_only"); x.fallback_prompts.icon_png = "قصير"; return x; }],
-  ["prompt missing shared anchor", false, () => { const x = baseManifest("prompts_only"); x.fallback_prompts.icon_png = "أنشئ أيقونة عربية مستقلة وأصلية بخلفية شفافة ومقاس دقيق وبلا نص إضافي أو موكاب أو علامة مائية، مع التحقق من الملف قبل التسليم."; return x; }],
-  ["prompt missing raster-only rule", false, () => { const x = baseManifest("prompts_only"); x.fallback_prompts.icon_png = `${visualAnchor} أنشئ أيقونة Raster عربية مستقلة وأصلية بخلفية شفافة ومقاس دقيق وبلا نص إضافي أو موكاب أو علامة مائية، مع التحقق من الملف قبل التسليم.`; return x; }],
-  ["unverified Arabic", false, () => { const x = baseManifest(); x.qa.arabic_spelling_verified = false; return x; }],
-  ["Arabic text not verified inside logo", false, () => { const x = baseManifest(); x.qa.arabic_text_inside_logo_verified = false; return x; }],
-  ["raster pipeline not verified", false, () => { const x = baseManifest(); x.qa.direct_raster_pipeline_verified = false; return x; }],
-  ["SVG used", false, () => { const x = baseManifest(); x.production.svg_used = true; return x; }],
-  ["HTML used", false, () => { const x = baseManifest(); x.production.html_used = true; return x; }],
-  ["Inkscape used", false, () => { const x = baseManifest(); x.production.inkscape_used = true; return x; }],
-  ["vector intermediate used", false, () => { const x = baseManifest(); x.production.vector_intermediate_used = true; return x; }],
-  ["conversion to PNG used", false, () => { const x = baseManifest(); x.production.conversion_to_png_used = true; return x; }],
-  ["SVG to PNG pipeline", false, () => { const x = baseManifest(); x.production.pipeline = "svg_to_png"; return x; }],
-  ["assets without image generation", false, () => { const x = baseManifest(); x.production.image_generation_used = false; x.production.arabic_generation_attempts = 0; return x; }],
-  ["more than three Arabic attempts", false, () => { const x = baseManifest(); x.production.arabic_generation_attempts = 4; return x; }],
-  ["outputs not separate", false, () => { const x = baseManifest(); x.qa.outputs_are_separate_verified = false; return x; }],
-  ["palette not reported as text", false, () => { const x = baseManifest(); x.qa.palette_reported_as_text = false; return x; }],
-  ["missing brand board", false, () => { const x = baseManifest(); delete x.assets.brand_board_png; return x; }],
-  ["wrong brand board dimensions", false, () => baseManifest(), { boardWidth: 1500 }],
-  ["wrong logo dimensions", false, () => baseManifest(), { logoWidth: 1000 }],
-  ["opaque icon", false, () => baseManifest(), { opaqueIcon: true }],
-  ["banned SVG companion file", false, () => baseManifest(), { bannedFile: "draft.svg" }],
+  ["positive PNG", true, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["positive RGB opaque catalog", true, [], (d) => { const catalog = path.join(d, "brand-catalog.png"); pngRgb(catalog, 1536, 1024); png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", catalog, path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["old two-file call", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["large catalog within limit", true, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["catalog over limit", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["wrong catalog dimensions", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["positive SVG Claude fallback", true, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256)); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["valid SVG without flag", false, [], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256)); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["unknown validator flag", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["--unknown", "#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["positive SVG local gradient", true, ["--claude-fallback"], (d) => { const gradient = '<defs><linearGradient id="g"><stop stop-color="#5A2134"/><stop offset="1" stop-color="#8C4517"/></linearGradient></defs><path d="M2 2h8v8H2z" fill="url(#g)"/>'; fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, gradient)); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32, gradient)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["positive SVG Arabic text and path", true, ["--claude-fallback"], (d) => { const body = '<g id="mark"><path d="M2 2h8v8H2z" fill="#5A2134"/></g><text x="20" y="40" font-size="24">سَدوة</text>'; fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, body)); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32, '<path d="M2 2h8v8H2z" fill="#5A2134"/>')); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["wrong dimensions", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1000, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["opaque PNG", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256, true); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["opaque icon", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32, true); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["oversized logo", false, [], (d) => { const logo = path.join(d, "logo-ar.png"); png(logo, 1024, 256); padPng(logo, 2_000_000); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", logo, path.join(d, "store-icon.png")]; }],
+  ["oversized icon", false, [], (d) => { const icon = path.join(d, "store-icon.png"); png(path.join(d, "logo-ar.png"), 1024, 256); png(icon, 32, 32); padPng(icon, 2_000_000); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), icon]; }],
+  ["fully transparent catalog", false, [], (d) => { const catalog = path.join(d, "brand-catalog.png"); pngFullyTransparent(catalog, 1536, 1024); png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", catalog, path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["mixed format", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.svg")]; }],
+  ["unsafe SVG catalog", false, ["--claude-fallback"], (d) => { const catalog = path.join(d, "brand-catalog.svg"); fs.writeFileSync(catalog, svg(1536, 1024, '<script>alert(1)</script>')); fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256)); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", catalog, path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["unsafe SVG", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<script>alert(1)</script>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["external SVG image", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<image href="https://example.test/a.png"/>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["encoded SVG URL", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<path style="fill:&#x75;rl(https://example.test/a)"/>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["uppercase external SVG URL", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<path d="M0 0" fill="URL(https://example.test/a)"/>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["noncanonical local SVG URL", false, ["--claude-fallback"], (d) => { const body = '<defs><linearGradient id="g"><stop stop-color="#5A2134"/></linearGradient></defs><path d="M0 0" fill="URL(#g)"/>'; fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, body)); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32, body)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["reviewer animation payload", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<a><set attributeName="href" to="javascript:alert(1)"/></a>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["duplicate SVG attributes", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<path d="M0 0" d="M1 1"/>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["malformed SVG nesting", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<g><path d="M0 0"></g>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["unknown SVG tag and attribute", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<custom unsafe="1"/>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["missing local SVG ID", false, ["--claude-fallback"], (d) => { fs.writeFileSync(path.join(d, "logo-ar.svg"), svg(1024, 256, '<path d="M0 0" fill="url(#missing)"/>')); fs.writeFileSync(path.join(d, "store-icon.svg"), svg(32, 32)); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.svg"), path.join(d, "store-icon.svg")]; }],
+  ["mismatched filenames", false, [], (d) => { png(path.join(d, "wrong.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", path.join(d, "wrong.png"), path.join(d, "store-icon.png")]; }],
+  ["duplicate colors", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#5a2134", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["banned extra artifacts", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); for (const n of ["brand-board.png", "colors-hex.txt", "brand-kit.json", "brand-kit-report.md"]) fs.writeFileSync(path.join(d, n), "x"); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["arbitrary extra artifact", false, [], (d) => { png(path.join(d, "logo-ar.png"), 1024, 256); png(path.join(d, "store-icon.png"), 32, 32); fs.writeFileSync(path.join(d, "notes.txt"), "x"); return ["#5A2134", "#8C4517", path.join(d, "logo-ar.png"), path.join(d, "store-icon.png")]; }],
+  ["missing IEND", false, [], (d) => { const logo = path.join(d, "logo-ar.png"); png(logo, 1024, 256); fs.truncateSync(logo, fs.statSync(logo).size - 12); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", logo, path.join(d, "store-icon.png")]; }],
+  ["corrupt PNG CRC", false, [], (d) => { const logo = path.join(d, "logo-ar.png"); png(logo, 1024, 256); const data = fs.readFileSync(logo); data[data.length - 1] ^= 0xff; fs.writeFileSync(logo, data); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", logo, path.join(d, "store-icon.png")]; }],
+  ["PNG decompression overrun", false, [], (d) => { const logo = path.join(d, "logo-ar.png"); pngWithRaw(logo, 1024, 256, Buffer.alloc((1024 * 4 + 1) * 256 + 1)); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", logo, path.join(d, "store-icon.png")]; }],
+  ["unsupported PNG critical chunk", false, [], (d) => { const logo = path.join(d, "logo-ar.png"); png(logo, 1024, 256); const data = fs.readFileSync(logo); fs.writeFileSync(logo, Buffer.concat([data.subarray(0, 33), chunk("AbCD", Buffer.alloc(0)), data.subarray(33)])); png(path.join(d, "store-icon.png"), 32, 32); return ["#5A2134", "#8C4517", logo, path.join(d, "store-icon.png")]; }],
 ];
-
 let failures = 0;
-for (const [name, expected, createManifest, fixture = {}] of cases) {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "store-brand-kit-"));
-  const manifest = createManifest();
-  if (manifest.status === "assets_ready") {
-    writePng(path.join(directory, "brand-board.png"), fixture.boardWidth ?? 1536, 1024, true);
-    writePng(path.join(directory, "logo-ar.png"), fixture.logoWidth ?? 1024, 256);
-    writePng(path.join(directory, "store-icon.png"), 32, 32, fixture.opaqueIcon ?? false);
-  }
-  if (fixture.bannedFile) fs.writeFileSync(path.join(directory, fixture.bannedFile), "<svg></svg>");
-  const inputPath = path.join(directory, "brand-kit.json");
-  fs.writeFileSync(inputPath, JSON.stringify(manifest, null, 2));
-  const result = spawnSync(process.execPath, [validatorPath, inputPath], { encoding: "utf8" });
-  const actual = result.status === 0;
-  fs.rmSync(directory, { recursive: true, force: true });
-  if (actual !== expected) {
-    failures += 1;
-    console.error(`FAIL ${name}\n${result.stdout}${result.stderr}`);
-  } else {
-    console.log(`PASS ${name}`);
-  }
-}
-
-if (failures) process.exit(1);
-console.log(`PASS ${cases.length}/${cases.length}`);
+for (const [name, expected, flags, create] of cases) { const dir = fs.mkdtempSync(path.join(os.tmpdir(), "brand-contract-")); const params = create(dir); if (name !== "old two-file call" && params.length === 4) { const ext = path.extname(params.at(-1)); const catalog = path.join(dir, `brand-catalog${ext}`); if (ext === ".png") { png(catalog, name === "wrong catalog dimensions" ? 1500 : 1536, 1024, true); if (name === "large catalog within limit" || name === "catalog over limit") padPng(catalog, name === "large catalog within limit" ? 2_000_000 : 10_100_000); } else fs.writeFileSync(catalog, svg(1536, 1024)); params.splice(2, 0, catalog); } const result = spawnSync(process.execPath, [validator, ...flags, ...params], { encoding: "utf8" }); const actual = result.status === 0; fs.rmSync(dir, { recursive: true, force: true }); if (actual !== expected) { failures += 1; console.error(`FAIL ${name}\n${result.stdout}${result.stderr}`); } else console.log(`PASS ${name}`); }
+if (failures) process.exit(1); console.log(`PASS ${cases.length}/${cases.length}`);
