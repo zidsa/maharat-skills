@@ -49,8 +49,7 @@ function pngInfo(file, width, height, { requiresAlpha, maxBytes }) {
   const actualWidth = header.readUInt32BE(0); const actualHeight = header.readUInt32BE(4);
   const bitDepth = header[8]; const type = header[9];
   if (actualWidth !== width || actualHeight !== height) throw new Error(`المقاس ${actualWidth}x${actualHeight}، المطلوب ${width}x${height}`);
-  const expectedType = requiresAlpha ? 6 : 2;
-  if (bitDepth !== 8 || type !== expectedType || header[10] || header[11] || header[12]) throw new Error(requiresAlpha ? "يلزم PNG RGBA 8-bit غير متداخل" : "يلزم PNG truecolor 8-bit غير متداخل");
+  if (bitDepth !== 8 || (requiresAlpha ? type !== 6 : ![2, 6].includes(type)) || header[10] || header[11] || header[12]) throw new Error(requiresAlpha ? "يلزم PNG RGBA 8-bit غير متداخل" : "يلزم PNG RGB أو RGBA 8-bit غير متداخل");
   const bpp = type === 6 ? 4 : 3; const stride = actualWidth * bpp; const expectedRawBytes = (stride + 1) * actualHeight;
   const raw = inflateSync(Buffer.concat(ids), { maxOutputLength: expectedRawBytes });
   if (raw.length !== expectedRawBytes) throw new Error("بيانات PNG غير متوقعة");

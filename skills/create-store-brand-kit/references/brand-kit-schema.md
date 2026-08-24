@@ -4,7 +4,7 @@
 
 | القدرة | الكتالوج | الشعار | الأيقونة | الألوان النصية |
 |---|---|---|---|---|
-| توليد/تحرير صورة مع حفظ وفحص | `brand-catalog.png` 1536x1024 truecolor 8-bit غير متداخل | `logo-ar.png` 1024x256 RGBA 8-bit غير متداخل؛ الأركان الأربعة شفافة و1% `alpha=0` | `store-icon.png` 32x32 بالشروط نفسها | Primary وSecondary HEX بعد الصور |
+| توليد/تحرير صورة مع حفظ وفحص | `brand-catalog.png` 1536x1024 RGB أو RGBA 8-bit غير متداخل؛ الشفافية اختيارية | `logo-ar.png` 1024x256 RGBA 8-bit غير متداخل؛ الأركان الأربعة شفافة و1% `alpha=0` | `store-icon.png` 32x32 بالشروط نفسها | Primary وSecondary HEX بعد الصور |
 | Claude فقط عند تعذر PNG | `brand-catalog.svg` 1536x1024 | `logo-ar.svg` 1024x256 | `store-icon.svg` 32x32 | Primary وSecondary HEX بعد الصور |
 
 - لا تخلط PNG وSVG في التسليم الواحد.
