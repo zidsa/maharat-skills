@@ -9,6 +9,8 @@ if (claudeFallback) args.shift();
 const [primary, secondary, catalogArg, logoArg, iconArg] = args;
 const ASSET_MAX_BYTES = 1_950_000;
 const CATALOG_MAX_BYTES = 10_000_000;
+const MIN_TRANSPARENT_RATIO = 0.01;
+const LEGACY_FORBIDDEN_ARTIFACTS = new Set(["brand-board.png", "colors-hex.txt", "brand-kit.json", "brand-kit-report.md"]);
 const HEX = /^#[0-9a-f]{6}$/i;
 const errors = [];
 
@@ -38,6 +40,7 @@ function pngInfo(file, width, height, { requiresAlpha, maxBytes }) {
     if (!header && type !== "IHDR") throw new Error("يجب أن يكون IHDR أول chunk");
     if (type === "IHDR") { if (header || length !== 13) throw new Error("IHDR غير صالح أو مكرر"); header = chunk; }
     else if (type === "IDAT") { if (idatClosed) throw new Error("IDAT يجب أن تكون متجاورة"); sawIdat = true; ids.push(chunk); }
+    else if (type === "tRNS") throw new Error("tRNS غير مدعوم في PNG المدعوم");
     else if (type === "IEND") { if (!sawIdat || length !== 0 || ended) throw new Error("IEND غير صالح"); ended = true; offset = end + 4; break; }
     else { if (sawIdat) idatClosed = true; if (/^[A-Z]/u.test(type)) throw new Error(`chunk حرج غير مدعوم: ${type}`); }
     offset = end + 4;
@@ -46,18 +49,33 @@ function pngInfo(file, width, height, { requiresAlpha, maxBytes }) {
   const actualWidth = header.readUInt32BE(0); const actualHeight = header.readUInt32BE(4);
   const bitDepth = header[8]; const type = header[9];
   if (actualWidth !== width || actualHeight !== height) throw new Error(`المقاس ${actualWidth}x${actualHeight}، المطلوب ${width}x${height}`);
-  if (bitDepth !== 8 || ![2, 4, 6].includes(type) || header[10] || header[11] || header[12] || (requiresAlpha && ![4, 6].includes(type))) throw new Error("يلزم PNG 8-bit غير متداخل بصيغة الألوان المطلوبة");
-  const bpp = type === 6 ? 4 : type === 4 ? 2 : 3; const stride = actualWidth * bpp; const expectedRawBytes = (stride + 1) * actualHeight;
+  const expectedType = requiresAlpha ? 6 : 2;
+  if (bitDepth !== 8 || type !== expectedType || header[10] || header[11] || header[12]) throw new Error(requiresAlpha ? "يلزم PNG RGBA 8-bit غير متداخل" : "يلزم PNG truecolor 8-bit غير متداخل");
+  const bpp = type === 6 ? 4 : 3; const stride = actualWidth * bpp; const expectedRawBytes = (stride + 1) * actualHeight;
   const raw = inflateSync(Buffer.concat(ids), { maxOutputLength: expectedRawBytes });
   if (raw.length !== expectedRawBytes) throw new Error("بيانات PNG غير متوقعة");
-  let previous = Buffer.alloc(stride); let pos = 0; let transparent = false; let visible = false;
+  let previous = Buffer.alloc(stride); let pos = 0; let transparentPixels = 0; let visible = false; const cornersTransparent = [false, false, false, false];
   const paeth = (a, b, c) => { const p = a + b - c; const pa = Math.abs(p - a); const pb = Math.abs(p - b); const pc = Math.abs(p - c); return pa <= pb && pa <= pc ? a : pb <= pc ? b : c; };
   for (let y = 0; y < actualHeight; y += 1) {
     const filter = raw[pos++]; const row = Buffer.alloc(stride);
     for (let x = 0; x < stride; x += 1) { const left = x >= bpp ? row[x - bpp] : 0; const up = previous[x]; const ul = x >= bpp ? previous[x - bpp] : 0; const p = filter === 0 ? 0 : filter === 1 ? left : filter === 2 ? up : filter === 3 ? Math.floor((left + up) / 2) : filter === 4 ? paeth(left, up, ul) : null; if (p === null) throw new Error("مرشح PNG غير مدعوم"); row[x] = (raw[pos + x] + p) & 255; }
-    pos += stride; if (type === 2) visible = true; else for (let x = bpp - 1; x < stride; x += bpp) { visible ||= row[x] > 0; transparent ||= row[x] === 0; } previous = row;
+    pos += stride;
+    if (type === 2) visible = true;
+    else for (let x = 0; x < actualWidth; x += 1) {
+      const alpha = row[x * bpp + bpp - 1];
+      visible ||= alpha > 0;
+      if (alpha === 0) {
+        transparentPixels += 1;
+        if (x === 0 && y === 0) cornersTransparent[0] = true;
+        if (x === actualWidth - 1 && y === 0) cornersTransparent[1] = true;
+        if (x === 0 && y === actualHeight - 1) cornersTransparent[2] = true;
+        if (x === actualWidth - 1 && y === actualHeight - 1) cornersTransparent[3] = true;
+      }
+    }
+    previous = row;
   }
-  if (!visible || (requiresAlpha && !transparent)) throw new Error("يلزم بكسلات شفافة ومرئية فعلية");
+  if (!visible) throw new Error("يلزم بكسلات مرئية فعلية");
+  if (requiresAlpha && (!cornersTransparent.every(Boolean) || transparentPixels / (actualWidth * actualHeight) < MIN_TRANSPARENT_RATIO)) throw new Error("يلزم خلفية شفافة فعلية: الأركان الأربعة شفافة و1% على الأقل من البكسلات alpha=0");
   return { width: actualWidth, height: actualHeight, bytes: data.length };
 }
 
@@ -140,7 +158,7 @@ if (catalogArg && logoArg && iconArg) {
     try { inspected.catalog = mode === "png" ? pngInfo(catalog, 1536, 1024, { requiresAlpha: false, maxBytes: CATALOG_MAX_BYTES }) : svgInfo(catalog, 1536, 1024, CATALOG_MAX_BYTES); } catch (error) { fail(`catalog: ${error.message}`); }
     try { inspected.logo = mode === "png" ? pngInfo(logo, 1024, 256, { requiresAlpha: true, maxBytes: ASSET_MAX_BYTES }) : svgInfo(logo, 1024, 256, ASSET_MAX_BYTES); } catch (error) { fail(`logo: ${error.message}`); }
     try { inspected.icon = mode === "png" ? pngInfo(icon, 32, 32, { requiresAlpha: true, maxBytes: ASSET_MAX_BYTES }) : svgInfo(icon, 32, 32, ASSET_MAX_BYTES); } catch (error) { fail(`icon: ${error.message}`); }
-    if (fs.existsSync(directory)) for (const entry of fs.readdirSync(directory, { withFileTypes: true })) if (entry.isFile() && !expected.includes(entry.name)) fail(`${entry.name}: مخرج تاجر زائد ومحظور`);
+    if (fs.existsSync(directory)) for (const entry of fs.readdirSync(directory, { withFileTypes: true })) if (entry.isFile() && LEGACY_FORBIDDEN_ARTIFACTS.has(entry.name)) fail(`${entry.name}: أثر قديم محظور`);
   }
 }
 
