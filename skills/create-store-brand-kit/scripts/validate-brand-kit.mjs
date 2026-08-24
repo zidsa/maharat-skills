@@ -58,14 +58,14 @@ function paeth(a, b, c) {
   return c;
 }
 
-function inspectPng(filePath, expectedWidth, expectedHeight) {
+function inspectPng(filePath, expectedWidth, expectedHeight, { requireTransparency, maxBytes }) {
   const data = fs.readFileSync(filePath);
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   if (data.length < 33 || !data.subarray(0, 8).equals(signature)) {
     throw new Error("الملف ليس PNG صالحًا");
   }
-  if (data.length > MAX_BYTES) {
-    throw new Error(`الحجم ${data.length} بايت يتجاوز ${MAX_BYTES}`);
+  if (maxBytes && data.length > maxBytes) {
+    throw new Error(`الحجم ${data.length} بايت يتجاوز ${maxBytes}`);
   }
 
   let offset = 8;
@@ -98,12 +98,14 @@ function inspectPng(filePath, expectedWidth, expectedHeight) {
   if (width !== expectedWidth || height !== expectedHeight) {
     throw new Error(`المقاس ${width}×${height}، المطلوب ${expectedWidth}×${expectedHeight}`);
   }
-  if (bitDepth !== 8 || ![4, 6].includes(colorType) || compression !== 0 || filter !== 0 || interlace !== 0) {
-    throw new Error("يلزم PNG غير متداخل 8-bit مع قناة alpha");
+  const supportedColorTypes = requireTransparency ? [4, 6] : [0, 2, 4, 6];
+  if (bitDepth !== 8 || !supportedColorTypes.includes(colorType) || compression !== 0 || filter !== 0 || interlace !== 0) {
+    const alphaRequirement = requireTransparency ? " مع قناة alpha" : "";
+    throw new Error(`يلزم PNG غير متداخل 8-bit${alphaRequirement}`);
   }
 
-  const bytesPerPixel = colorType === 6 ? 4 : 2;
-  const alphaOffset = colorType === 6 ? 3 : 1;
+  const bytesPerPixel = { 0: 1, 2: 3, 4: 2, 6: 4 }[colorType];
+  const alphaOffset = colorType === 6 ? 3 : colorType === 4 ? 1 : null;
   const stride = width * bytesPerPixel;
   const raw = inflateSync(Buffer.concat(imageData));
   if (raw.length !== (stride + 1) * height) {
@@ -113,7 +115,7 @@ function inspectPng(filePath, expectedWidth, expectedHeight) {
   let previous = Buffer.alloc(stride);
   let rawOffset = 0;
   let hasTransparentPixel = false;
-  let hasVisiblePixel = false;
+  let hasVisiblePixel = alphaOffset === null;
   for (let y = 0; y < height; y += 1) {
     const filterType = raw[rawOffset];
     rawOffset += 1;
@@ -132,20 +134,29 @@ function inspectPng(filePath, expectedWidth, expectedHeight) {
       else throw new Error(`مرشح PNG غير مدعوم: ${filterType}`);
       row[x] = (encoded + predictor) & 255;
     }
-    for (let x = alphaOffset; x < stride; x += bytesPerPixel) {
-      if (row[x] === 0) hasTransparentPixel = true;
-      if (row[x] > 0) hasVisiblePixel = true;
+    if (alphaOffset !== null) {
+      for (let x = alphaOffset; x < stride; x += bytesPerPixel) {
+        if (row[x] === 0) hasTransparentPixel = true;
+        if (row[x] > 0) hasVisiblePixel = true;
+      }
     }
     rawOffset += stride;
     previous = row;
   }
 
-  if (!hasTransparentPixel) throw new Error("لا توجد بكسلات شفافة فعلية");
+  if (requireTransparency && !hasTransparentPixel) throw new Error("لا توجد بكسلات شفافة فعلية");
   if (!hasVisiblePixel) throw new Error("الصورة شفافة كليًا وبلا محتوى مرئي");
-  return { width, height, bytes: data.length, transparent: true };
+  return {
+    width,
+    height,
+    bytes: data.length,
+    has_alpha: alphaOffset !== null,
+    has_transparent_pixel: hasTransparentPixel,
+    has_visible_pixel: hasVisiblePixel,
+  };
 }
 
-if (manifest.schema_version !== 1) errors.push("schema_version يجب أن يساوي 1");
+if (manifest.schema_version !== 2) errors.push("schema_version يجب أن يساوي 2");
 if (!["assets_ready", "prompts_only"].includes(manifest.status)) errors.push("status غير صالح");
 if (!manifest.store?.name_ar?.trim()) errors.push("store.name_ar مطلوب");
 
@@ -174,6 +185,11 @@ if (!Array.isArray(manifest.directions) || manifest.directions.length !== 3) {
   if (!directionIds.has(manifest.selected_direction)) errors.push("selected_direction لا يشير إلى اتجاه موجود");
 }
 
+const visualAnchor = manifest.visual_anchor?.trim() || "";
+if (visualAnchor.length < 80) {
+  errors.push("visual_anchor يجب أن يكون وصفًا مشتركًا من 80 حرفًا على الأقل");
+}
+
 const paletteKeys = ["primary", "on_primary", "secondary", "on_secondary", "background", "on_background"];
 for (const key of paletteKeys) {
   if (!HEX.test(manifest.palette?.[key] || "")) errors.push(`palette.${key} يجب أن يكون HEX من ست خانات`);
@@ -190,24 +206,41 @@ if (paletteKeys.every((key) => HEX.test(manifest.palette?.[key] || ""))) {
   checkContrast("الثانوي مع الخلفية", manifest.palette.secondary, manifest.palette.background, 3);
 }
 
-for (const key of ["logo_png", "icon_png"]) {
-  if (!manifest.fallback_prompts?.[key] || manifest.fallback_prompts[key].trim().length < 120) {
+for (const key of ["brand_board_png", "logo_png", "icon_png"]) {
+  const prompt = manifest.fallback_prompts?.[key]?.trim() || "";
+  if (prompt.length < 120) {
     errors.push(`fallback_prompts.${key} يجب أن يكون برومبتًا كاملًا`);
+  }
+  if (visualAnchor && !prompt.includes(visualAnchor)) {
+    errors.push(`fallback_prompts.${key} يجب أن يحتوي visual_anchor نفسه حرفيًا`);
   }
 }
 
 const inspectedAssets = {};
 if (manifest.status === "assets_ready") {
-  const requiredQa = ["arabic_spelling_verified", "transparent_background_verified", "icon_at_32px_verified", "originality_reviewed"];
+  const requiredQa = [
+    "outputs_are_separate_verified",
+    "palette_reported_as_text",
+    "qa_report_reported_as_text",
+    "brand_board_dimensions_verified",
+    "visual_consistency_verified",
+    "arabic_spelling_verified",
+    "logo_transparent_background_verified",
+    "icon_transparent_background_verified",
+    "icon_at_32px_verified",
+    "originality_reviewed",
+  ];
   for (const key of requiredQa) {
     if (manifest.qa?.[key] !== true) errors.push(`qa.${key} يجب أن يساوي true في assets_ready`);
   }
 
   const expectedAssets = [
-    ["logo_png", 1024, 256, "logo-ar.png"],
-    ["icon_png", 32, 32, "store-icon.png"],
+    ["brand_board_png", 1536, 1024, "brand-board.png", false, null],
+    ["logo_png", 1024, 256, "logo-ar.png", true, MAX_BYTES],
+    ["icon_png", 32, 32, "store-icon.png", true, MAX_BYTES],
   ];
-  for (const [key, width, height, expectedName] of expectedAssets) {
+  const assetNames = new Set();
+  for (const [key, width, height, expectedName, requireTransparency, maxBytes] of expectedAssets) {
     const asset = manifest.assets?.[key];
     if (!asset) {
       errors.push(`assets.${key} مطلوب`);
@@ -217,6 +250,8 @@ if (manifest.status === "assets_ready") {
       errors.push(`assets.${key}.file يجب أن يساوي ${expectedName}`);
       continue;
     }
+    if (assetNames.has(asset.file)) errors.push(`${asset.file}: اسم الملف مكرر والمخرجات يجب أن تكون مستقلة`);
+    assetNames.add(asset.file);
     if (asset.width !== width || asset.height !== height) errors.push(`assets.${key}: مقاس manifest غير صحيح`);
     const filePath = path.join(assetDirectory, asset.file);
     if (!fs.existsSync(filePath)) {
@@ -224,7 +259,7 @@ if (manifest.status === "assets_ready") {
       continue;
     }
     try {
-      inspectedAssets[key] = inspectPng(filePath, width, height);
+      inspectedAssets[key] = inspectPng(filePath, width, height, { requireTransparency, maxBytes });
     } catch (error) {
       errors.push(`${asset.file}: ${error.message}`);
     }
