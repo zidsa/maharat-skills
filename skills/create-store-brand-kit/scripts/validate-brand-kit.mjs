@@ -11,6 +11,7 @@ if (!manifestPath) {
 
 const MAX_BYTES = 1_950_000;
 const HEX = /^#[0-9A-Fa-f]{6}$/;
+const REQUIRED_RASTER_PROMPT_TERMS = ["direct_raster_png", "SVG", "HTML", "Inkscape", "وسيط متجهي"];
 const errors = [];
 const resolvedManifest = path.resolve(process.cwd(), manifestPath);
 const assetDirectory = path.dirname(resolvedManifest);
@@ -156,9 +157,46 @@ function inspectPng(filePath, expectedWidth, expectedHeight, { requireTransparen
   };
 }
 
-if (manifest.schema_version !== 2) errors.push("schema_version يجب أن يساوي 2");
+if (manifest.schema_version !== 3) errors.push("schema_version يجب أن يساوي 3");
 if (!["assets_ready", "prompts_only"].includes(manifest.status)) errors.push("status غير صالح");
 if (!manifest.store?.name_ar?.trim()) errors.push("store.name_ar مطلوب");
+
+const production = manifest.production || {};
+if (production.pipeline !== "direct_raster_png") {
+  errors.push("production.pipeline يجب أن يساوي direct_raster_png؛ يُمنع أي مسار SVG أو HTML أو متجهي");
+}
+if (typeof production.image_generation_used !== "boolean") {
+  errors.push("production.image_generation_used يجب أن يكون true أو false");
+}
+for (const key of [
+  "svg_used",
+  "html_used",
+  "inkscape_used",
+  "vector_intermediate_used",
+  "conversion_to_png_used",
+]) {
+  if (production[key] !== false) {
+    errors.push(`production.${key} يجب أن يساوي false؛ هذه الطريقة محظورة في جميع المراحل`);
+  }
+}
+
+const arabicAttempts = production.arabic_generation_attempts;
+if (!Number.isInteger(arabicAttempts) || arabicAttempts < 0 || arabicAttempts > 3) {
+  errors.push("production.arabic_generation_attempts يجب أن يكون عددًا صحيحًا من 0 إلى 3");
+} else if (production.image_generation_used !== (arabicAttempts > 0)) {
+  errors.push("production.image_generation_used يجب أن يطابق وجود محاولات توليد عربية فعلية");
+}
+if (manifest.status === "assets_ready" && production.image_generation_used !== true) {
+  errors.push("assets_ready يتطلب توليد/تحرير صورة Raster مباشر فعليًا");
+}
+
+for (const entry of fs.readdirSync(assetDirectory, { withFileTypes: true })) {
+  if (!entry.isFile()) continue;
+  const extension = path.extname(entry.name).toLowerCase();
+  if ([".svg", ".svgz", ".html", ".htm"].includes(extension)) {
+    errors.push(`${entry.name}: ملف محظور داخل حزمة الهوية؛ لا تستخدم SVG أو HTML حتى كوسيط`);
+  }
+}
 
 if (!Array.isArray(manifest.source_register) || manifest.source_register.length === 0) {
   errors.push("source_register مطلوب");
@@ -214,17 +252,24 @@ for (const key of ["brand_board_png", "logo_png", "icon_png"]) {
   if (visualAnchor && !prompt.includes(visualAnchor)) {
     errors.push(`fallback_prompts.${key} يجب أن يحتوي visual_anchor نفسه حرفيًا`);
   }
+  for (const term of REQUIRED_RASTER_PROMPT_TERMS) {
+    if (!prompt.includes(term)) {
+      errors.push(`fallback_prompts.${key} يجب أن يذكر منع طرق الإنتاج المحظورة صراحةً: ${term}`);
+    }
+  }
 }
 
 const inspectedAssets = {};
 if (manifest.status === "assets_ready") {
   const requiredQa = [
+    "direct_raster_pipeline_verified",
     "outputs_are_separate_verified",
     "palette_reported_as_text",
     "qa_report_reported_as_text",
     "brand_board_dimensions_verified",
     "visual_consistency_verified",
     "arabic_spelling_verified",
+    "arabic_text_inside_logo_verified",
     "logo_transparent_background_verified",
     "icon_transparent_background_verified",
     "icon_at_32px_verified",
