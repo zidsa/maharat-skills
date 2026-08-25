@@ -26,7 +26,8 @@ const runtimeSurfaces = [
   schema,
 ];
 const choiceQuestion = "اختر 1 أو 2 أو 3، أو قل: خيارات جديدة مع ملاحظتك.";
-const finalOrder = ["logo-ar.png", "store-icon.png", "Primary", "Secondary"];
+const finalOrder = ["logo-ar.png", "store-icon.png", "1. اللون الأساسي: #RRGGBB", "2. اللون الثانوي: #RRGGBB"];
+const finalLabelOrder = ["logo-ar.png", "store-icon.png", "1. اللون الأساسي:", "2. اللون الثانوي:"];
 const singularPromptForbidden = [
   /\b[123]\b/u,
   /concept-[123]\.png/u,
@@ -133,6 +134,9 @@ for (const [index, source] of fullRunPrompts.entries()) {
   assert.ok(source.includes("صورة `logo-ar.png` النهائية") || source.includes("صورة logo-ar.png النهائية"), `${label} uses the actual final logo image for the icon`);
   assert.ok(source.includes("مرة واحدة") && source.includes("لا تنشئها من الوصف النصي وحده"), `${label} prevents text-only icon regeneration`);
   assert.ok(source.includes("الأصل نفسه") && source.includes("لا تعِد ابتكار"), `${label} preserves icon geometry during post-processing`);
+  assert.ok(source.includes("الشعار النهائي نفسه") && source.includes("الأكثر حضورًا وتمثيلًا للعلامة"), `${label} derives official colors from the final visible mark`);
+  assert.ok(source.includes("اللون الثانوي داعم ظاهر") && source.includes("خلفية المعاينة"), `${label} excludes presentation backgrounds from official colors`);
+  assert.doesNotMatch(source, /(?:Primary|Secondary):/u, `${label} exposes Arabic color labels only`);
 }
 
 const defaultPrompt = agent.match(/^  default_prompt: "(.*)"$/mu)?.[1] || "";
@@ -151,6 +155,7 @@ assert.ok(productionMethod.includes("لا تشغّل الفاحص عليها") &
 assert.ok(sourceRegister.includes("يكتب `الخيار N` قبل صورته"));
 
 for (const source of runtimeSurfaces) {
+  assert.doesNotMatch(source, /(?:Primary|Secondary):/u, "merchant content excludes English color labels");
   for (const provider of ["Claude", "ChatGPT", "Gemini", "Manus"]) {
     assert.ok(!source.includes(provider), `merchant content excludes provider name ${provider}`);
   }
@@ -158,6 +163,16 @@ for (const source of runtimeSurfaces) {
     assert.ok(!source.includes(legacy), `runtime content excludes legacy contract ${legacy}`);
   }
 }
+
+for (const source of [skill, copyPrompt, productionMethod, schema]) {
+  for (const rule of ["الشعار النهائي", "الأكثر حضورًا وتمثيلًا للعلامة", "داعم ظاهر", "خلفية المعاينة", "الظلال", "اللمعات", "الانعكاسات", "الأسود أو الأبيض", "HEX مسطح"]) {
+    assert.ok(source.includes(rule), `color-selection contract preserves ${rule}`);
+  }
+}
+for (const source of [skill, copyPrompt, schema]) assert.ok(source.includes("لا تقيّد"), "official colors do not constrain logo creativity");
+assert.ok(productionMethod.includes("ليس قيدًا يحصر إبداعه"), "production treats official colors as post-logo verification");
+assert.ok(exampleOutput.includes("#D6A15B") && exampleOutput.includes("#F3E2C9"), "gold example maps visible mark colors");
+assert.ok(exampleOutput.includes("#17120F") && exampleOutput.includes("خلفية عرض لا مساحة داخل العلامة"), "gold example rejects the dark presentation background");
 
 assert.ok(productionMethod.includes("Python/Pillow") && productionMethod.includes("بعد توليد الأصل بصريًا"));
 assert.ok(productionMethod.includes("إزالة الخلفية") && productionMethod.includes("الحفاظ على النسبة") && productionMethod.includes("بلا قص"));
@@ -169,6 +184,6 @@ assert.ok(!validator.includes("catalogArg") && !validator.includes("CATALOG_MAX_
 assert.ok(validator.includes("args.length !== 4"));
 assert.ok(validator.includes("RGB أو خلفية شطرنجية مرسومة لا تعد شفافية"));
 assertInOrder(outputTemplate, finalOrder, "output template final delivery");
-assertInOrder(exampleOutput, finalOrder, "example final delivery");
+assertInOrder(exampleOutput, finalLabelOrder, "example final delivery");
 
 console.log("PASS mapped preview and final raster create-store-brand-kit workflow contract");
