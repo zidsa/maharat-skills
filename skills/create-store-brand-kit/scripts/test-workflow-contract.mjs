@@ -18,20 +18,12 @@ const fullRunPrompts = [skill, copyPrompt];
 const runtimeSurfaces = [skill, agent, copyPrompt, outputTemplate, exampleOutput, inputContract, productionMethod, schema];
 const choiceQuestion = "اختر 1 أو 2 أو 3، أو قل: خيارات جديدة مع ملاحظتك.";
 const finalOrder = ["brand-catalog.png", "logo-ar.png", "store-icon.png", "Primary", "Secondary"];
-const toolFirstPhrases = [
-  "استخدم أداة إنشاء الصور",
-  "استدعِ أداة الصور",
-  "أداة الصور",
-  "فحص الأدوات",
-  "قائمة الأدوات",
-  "فحص التوفر",
-  "تحقق من توفر",
-  "أداة الصور غير متاحة",
-  "عدم توفر أداة الصور",
-  "غير متاحة",
-  "محاولة استدعائها فعليًا",
-  "سجل التنفيذ",
-  "تعذر إنشاء",
+const singularPromptForbidden = [
+  /\b[123]\b/u,
+  /concept-[123]\.png/u,
+  /الاتجاه(?:ين|ات| الآخر)/u,
+  /شبكة|كولاج|contact sheet|moodboard/iu,
+  /اختر 1 أو 2 أو 3/u,
 ];
 
 function assertInOrder(source, terms, label) {
@@ -43,75 +35,72 @@ function assertInOrder(source, terms, label) {
   }
 }
 
+function extractSingleImagePrompts(source) {
+  return [...source.matchAll(/<single-image-prompt>\n([\s\S]*?)\n<\/single-image-prompt>/gu)]
+    .map((match) => match[1]);
+}
+
 const requiredInputs = inputContract.match(/## مطلوب فقط\n\n([\s\S]*?)\n\n##/u)?.[1] || "";
 const requiredInputBullets = requiredInputs.match(/^- .*$/gmu) || [];
 assert.equal(requiredInputBullets.length, 2, "exactly two merchant inputs remain");
 assert.ok(requiredInputs.includes("اسم المتجر بالعربية") && requiredInputs.includes("ما الذي يبيعه المتجر"), "the two inputs remain store name and products");
-for (const extra of ["الجمهور", "تفضيل", "سمات", "قائمة أصول"]) assert.ok(!requiredInputBullets.join("\n").includes(extra), `required inputs exclude ${extra}`);
 assert.ok(exampleRequest.includes("الاسم العربي") && exampleRequest.includes("ماذا يبيع"), "example request uses both inputs");
 
 for (const [index, source] of fullRunPrompts.entries()) {
   const label = `full run prompt ${index + 1}`;
-  const createNowPosition = source.indexOf("أنشئ الآن");
-  const statePosition = source.indexOf(index === 0 ? "## حالة المحادثة" : "نفّذ سيرًا من مرحلتين");
-  assert.ok(createNowPosition >= 0 && statePosition > createNowPosition, `${label} makes image creation the main action before state details`);
-  assert.ok(source.includes("مولدة بصريًا داخل المحادثة") && source.includes("PNG منشأة بالكود"), `${label} requires actual visual generation instead of coded PNG`);
-  assert.ok(source.includes("Python/Pillow") && source.includes("SVG"), `${label} carries the concise anti-code rule`);
-  assert.ok(source.includes("فحص الأصل") && source.includes("تصديره") && source.includes("تصغيره كاملًا"), `${label} keeps code limited to post-generation handling`);
-  assert.ok(source.includes("ثلاث عمليات إنشاء صور مستقلة"), `${label} requests three independent image-generation operations`);
-  assert.equal((source.match(/concept-[123]\.png/gu) || []).length, 3, `${label} names exactly three concept previews`);
-  for (const file of ["concept-1.png", "concept-2.png", "concept-3.png"]) assert.ok(source.includes(file), `${label} includes ${file}`);
-  assert.ok(source.includes("منفصلة بالضبط") || source.includes("منفصلة **بالضبط**"), `${label} requires exactly three separate previews`);
-  for (const dimension of ["1536x1024", "1024x256", "32x32"]) assert.ok(source.includes(dimension), `${label} includes ${dimension}`);
-  for (const distinction of ["فكرة العلامة", "الاسم العربي", "التكوين", "لوحة الألوان"]) assert.ok(source.includes(distinction) || (distinction === "لوحة الألوان" && source.includes("الألوان")), `${label} varies ${distinction}`);
-  assert.ok(source.includes("لا إعادة تلوين"), `${label} forbids recolor-only concepts`);
-  assert.ok(source.includes("جذريًا"), `${label} allows materially different palettes`);
-  assert.ok(source.includes("حرية حقيقية"), `${label} remains creativity-first`);
-  assert.equal(source.split(choiceQuestion).length - 1, 1, `${label} asks the one choice question exactly once`);
-  assert.ok(/السؤال[^\n]*وحده|اسأل وحده/u.test(source), `${label} keeps the merchant question singular`);
-  assert.ok(source.includes("توقف") || source.includes("وتوقف"), `${label} stops after phase one`);
-  assert.ok(source.includes("التصورات") && source.includes("بلا توليد جديد"), `${label} waits without regenerating while a current trio is pending`);
-  assert.ok(source.includes("لا تختَر تلقائيًا") || source.includes("لا تختَر اتجاهًا نيابة عنه"), `${label} forbids auto-selection`);
-  assert.ok(source.includes("في رد المرحلة الأولى"), `${label} withholds finals in phase one`);
-  assert.ok(source.includes("ثلاث") && source.includes("جديدة") && /مرفوض|رفضه/u.test(source), `${label} regenerates three new options after rejection`);
-  assert.ok(source.includes("احتفظ بالصور الناجحة"), `${label} retries only a failed preview without discarding successes`);
+  const prompts = extractSingleImagePrompts(source);
+  assert.equal(prompts.length, 3, `${label} contains three executable single-image prompts`);
+  assert.deepEqual(
+    prompts.map((prompt) => [prompt.includes("العلامة اللفظية"), prompt.includes("علامة مجردة"), prompt.includes("نظامًا طباعيًا")]),
+    [[true, false, false], [false, true, false], [false, false, true]],
+    `${label} uses three materially different creative methods`,
+  );
+
+  for (const [promptIndex, prompt] of prompts.entries()) {
+    assert.ok(prompt.startsWith("أنشئ لوحة هوية بصرية كاملة ومستقلة"), `${label} call ${promptIndex + 1} requests one complete board`);
+    for (const forbidden of singularPromptForbidden) assert.doesNotMatch(prompt, forbidden, `${label} call ${promptIndex + 1} stays singular and unlabelled`);
+    assert.ok(prompt.includes("النص المرئي الوحيد") && prompt.includes("اسم المتجر"), `${label} call ${promptIndex + 1} permits only the Arabic store name`);
+    for (const extraCopy of ["وصف النشاط", "سلوغان", "أكواد ألوان", "أسماء خطوط", "استخدامات", "حروفًا لاتينية", "أرقامًا"]) {
+      assert.ok(prompt.includes(extraCopy), `${label} call ${promptIndex + 1} forbids ${extraCopy}`);
+    }
+    assert.ok(prompt.includes("سياق") && /المنتجات|المنتج/u.test(prompt), `${label} call ${promptIndex + 1} treats products as context only`);
+    for (const furnitureCliche of ["سقفًا", "بيتًا", "كنبة", "كرسيًا", "ورقة نبات"]) assert.ok(prompt.includes(furnitureCliche), `${label} rejects furniture cliché ${furnitureCliche}`);
+  }
+
+  assert.ok(source.includes("بالتتابع") && source.includes("واحدًا فقط"), `${label} requires sequential single-prompt calls`);
+  assert.ok(source.includes("لا تبدأ") && source.includes("حتى يظهر مرفق"), `${label} waits for each visible attachment`);
+  for (const file of ["concept-1.png", "concept-2.png", "concept-3.png"]) assert.ok(source.includes(file), `${label} names attachment ${file} outside image prompts`);
+  assert.ok(source.includes("لا تسأل سؤال الاختيار") && source.includes("ثلاثة مرفقات صور مستقلة"), `${label} gates selection on three visible attachments`);
+  assert.ok(source.includes("صورة مركبة واحدة") && /لا تحقق|لا تكفي/u.test(source), `${label} rejects one composite image`);
+  assert.equal(source.split(choiceQuestion).length - 1, 1, `${label} asks the choice question exactly once`);
+  assert.ok(source.includes("أعد") && /البطاقة|المرفق/u.test(source) && source.includes("احتفظ"), `${label} retries only the missing attachment`);
+  assert.ok(source.includes("خارج الصور"), `${label} keeps concept numbers outside images`);
   assert.ok(source.includes("بعد اختيار صريح فقط") || source.includes("بعد الموافقة الصريحة فقط"), `${label} gates phase two on explicit approval`);
   assert.ok(source.includes("اللوحة المختارة كاملة"), `${label} preserves the full selected board`);
-  assert.ok((source.match(/من الصفر/gu) || []).length >= 2, `${label} requires fresh logo and icon renders`);
-  for (const forbiddenReuse of ["قص", "استخراج", "لقطة شاشة"]) assert.ok(source.includes(forbiddenReuse), `${label} explicitly prohibits ${forbiddenReuse}`);
-  assert.ok(source.includes("الأيقونة المستقلة") || source.includes("الرسم المستقل"), `${label} permits only standalone-icon downscaling`);
-  assert.ok(source.includes("الفحص") && /المرحلة الثانية|للمرحلة الثانية/u.test(source), `${label} keeps validation in the final phase`);
+  assert.ok((source.match(/من الصفر/gu) || []).length >= 2, `${label} fresh-renders logo and icon`);
+  for (const forbiddenReuse of ["قص", "استخراج", "لقطة شاشة"]) assert.ok(source.includes(forbiddenReuse), `${label} forbids ${forbiddenReuse}`);
   assertInOrder(source, finalOrder, `${label} final delivery`);
 }
 
 const defaultPrompt = agent.match(/^  default_prompt: "(.*)"$/mu)?.[1] || "";
-assert.ok(defaultPrompt.startsWith("استخدم $create-store-brand-kit لإنشاء"), "default prompt is a concise skill-creator invocation");
-assert.ok(defaultPrompt.includes("ثلاث صور هوية فعلية ومنفصلة الآن") && defaultPrompt.includes("انتظر اختياري"), "default prompt asks to create images now and wait for selection");
+assert.ok(defaultPrompt.startsWith("استخدم $create-store-brand-kit لإنشاء"), "default prompt is a concise skill invocation");
+assert.ok(defaultPrompt.includes("ثلاثة استدعاءات متتابعة") && defaultPrompt.includes("المرفقات الثلاثة") && defaultPrompt.includes("انتظر اختياري"), "default prompt preserves sequential approval flow");
 assert.equal(defaultPrompt.split("\n").length, 1, "default prompt remains one line");
-for (const technical of ["Python", "Pillow", "SVG", "1536x1024", "سجل التنفيذ", "أداة إنشاء الصور"]) assert.ok(!defaultPrompt.includes(technical), `default prompt excludes full-contract detail ${technical}`);
+
+assert.ok(outputTemplate.includes("لا تعرض سؤال الاختيار إذا كان أي مرفق مفقودًا"), "output template blocks premature selection");
+assert.ok(exampleOutput.includes("إذا كان مرفق مفقودًا") && exampleOutput.includes("يعاد وحده"), "example covers a missing attachment negative path");
+assert.ok(inputContract.includes("لا تسأل قبل اكتمال المرفقات الثلاثة"), "input contract gates the question");
+assert.ok(schema.includes("لا تُرسل أكثر من بطاقة") && schema.includes("صورة مركبة واحدة"), "schema defines singular calls and rejects composite output");
+assert.ok(productionMethod.includes("لا ترسل أكثر من بطاقة") && productionMethod.includes("لا تبدأ عملية جديدة حتى يظهر مرفق الحالية"), "production method is sequential");
+assert.ok(sourceRegister.includes("ثلاثة استدعاءات أحادية متتابعة") && sourceRegister.includes("اسم المتجر العربي"), "source register records the runtime contract");
 
 for (const source of runtimeSurfaces) {
-  for (const phrase of toolFirstPhrases) assert.ok(!source.includes(phrase), `runtime content excludes tool-first phrase ${phrase}`);
-  for (const obsoleteDetail of ["ImageMagick", "HTML", "CSS", "Canvas", "code-generated PNG"]) assert.ok(!source.includes(obsoleteDetail), `runtime content omits technical list item ${obsoleteDetail}`);
-  for (const blocked of ["رسالة الحجب", "تعذر إنشاء وإرفاق ملفات PNG الثلاثة الفعلية", "أخرج مرة واحدة فقط", "ملف وهمي", "ملفات وهمية"]) assert.ok(!source.includes(blocked), `runtime content excludes blocker ${blocked}`);
   for (const provider of ["Claude", "ChatGPT", "Gemini", "Manus"]) assert.ok(!source.includes(provider), `merchant content excludes provider name ${provider}`);
+  for (const legacy of ["--claude-fallback", "استثناء Claude", "تعذر إنشاء وإرفاق ملفات PNG الثلاثة الفعلية"]) assert.ok(!source.includes(legacy), `runtime content excludes ${legacy}`);
 }
 
-assert.ok(outputTemplate.indexOf("## الرد الأول") < outputTemplate.indexOf("## الرد النهائي"), "output template separates approval and final responses");
-assert.ok(exampleOutput.includes("يتوقف الرد هنا") && exampleOutput.includes("أختار 2"), "example demonstrates stop then explicit selection");
-assert.ok(schema.includes("ليست ثلاثية التسليم النهائي") && schema.includes("لا تُفحص بفاحص الأصول"), "phase-one previews are not final validator failures");
-assert.ok(productionMethod.includes("لا تطبق فاحصه في المرحلة الأولى"), "validator guidance excludes phase one");
-assert.ok(productionMethod.includes("## الفحص بعد اكتمال المرحلة الثانية"), "validator is a final-phase operation");
-assert.ok(productionMethod.indexOf("## الفحص بعد اكتمال المرحلة الثانية") < productionMethod.indexOf("node scripts/validate-brand-kit.mjs"), "validator command follows the final-phase heading");
-for (const source of [...runtimeSurfaces, sourceRegister]) {
-  assert.ok(!source.includes("--claude-fallback"), "legacy SVG fallback flag is removed");
-  assert.ok(!source.includes("استثناء Claude"), "provider-specific SVG exception is removed");
-}
-assert.ok(schema.includes("صيغة التسليم الوحيدة هي PNG") && productionMethod.includes("لا يقبل الفاحص إلا ثلاثية PNG"), "references define PNG-only delivery");
-assert.ok(validator.includes('ext !== ".png"') && validator.includes("يلزم ثلاثية PNG فقط"), "validator accepts PNG only");
-assert.ok(!validator.includes("svgInfo") && !validator.includes("claudeFallback"), "validator contains no SVG fallback path");
-for (const source of fullRunPrompts) assert.ok(!source.includes("node scripts/validate-brand-kit.mjs"), "merchant prompt does not expose validator commands");
+assert.ok(productionMethod.includes("لا يقبل الفاحص إلا ثلاثية PNG") && validator.includes('ext !== ".png"'), "validator remains PNG-only");
 assertInOrder(outputTemplate, finalOrder, "output template final delivery");
 assertInOrder(exampleOutput, finalOrder, "example final delivery");
 
-console.log("PASS staged create-store-brand-kit workflow contract");
+console.log("PASS sequential create-store-brand-kit workflow contract");
