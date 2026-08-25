@@ -11,10 +11,14 @@ const exampleOutput = read("examples/example-output.md");
 const inputContract = read("references/input-contract.md");
 const productionMethod = read("references/production-method.md");
 const schema = read("references/brand-kit-schema.md");
+const sourceRegister = read("references/source-register.md");
+const validator = read("scripts/validate-brand-kit.mjs");
 
 const merchantSurfaces = [skill, agent, copyPrompt];
 const choiceQuestion = "اختر 1 أو 2 أو 3، أو قل: خيارات جديدة مع ملاحظتك.";
 const nativeToolRule = "استخدم أداة إنشاء الصور المدمجة في المنصة الحالية بصمت، ولا تذكر اسمها أو تطلب تطبيقًا أو خدمة خارجية.";
+const noCodeToolRule = "لا تستدعِ أداة تنفيذ كود أو طرفية أو بيئة ملفات لإنشاء الصور";
+const pngProofRule = "كون الملف PNG لا يثبت أنه مولد بأداة الصور";
 const finalOrder = ["brand-catalog.png", "logo-ar.png", "store-icon.png", "Primary", "Secondary"];
 
 function assertInOrder(source, terms, label) {
@@ -36,6 +40,13 @@ assert.ok(exampleRequest.includes("الاسم العربي") && exampleRequest.i
 for (const [index, source] of merchantSurfaces.entries()) {
   const label = `merchant surface ${index + 1}`;
   assert.ok(source.includes(nativeToolRule), `${label} uses only the built-in image tool`);
+  assert.ok(source.includes(noCodeToolRule), `${label} forbids code, shell, and filesystem image creation`);
+  assert.ok(source.includes(pngProofRule), `${label} rejects extension-only provenance`);
+  assert.ok(source.includes("استدعاء مستقل") && source.includes("سجل التنفيذ"), `${label} requires one logged native-image call per image`);
+  for (const forbiddenGenerator of ["Python", "Pillow", "ImageMagick", "SVG", "HTML", "CSS", "Canvas", "code-generated PNG"]) assert.ok(source.includes(forbiddenGenerator), `${label} explicitly bans ${forbiddenGenerator} as an image source`);
+  for (const allowedCodeUse of ["الأبعاد", "الشفافية", "التباين", "تصدير", "تصغير"]) assert.ok(source.includes(allowedCodeUse), `${label} limits code to non-creative ${allowedCodeUse}`);
+  assert.ok(source.includes("لا تعلن") && source.includes("محاولة استدعائها فعليًا"), `${label} attempts the image tool before declaring it unavailable`);
+  assert.ok(source.includes("بديلًا برمجيًا") && /ملف(?:ات|ًا) وهم/u.test(source), `${label} forbids programmatic and fake-file fallbacks`);
   assert.ok(source.includes("ثلاث مرات"), `${label} invokes exactly three separate preview generations`);
   assert.equal((source.match(/concept-[123]\.png/gu) || []).length, 3, `${label} names exactly three concept previews`);
   for (const file of ["concept-1.png", "concept-2.png", "concept-3.png"]) assert.ok(source.includes(file), `${label} includes ${file}`);
@@ -74,6 +85,13 @@ assert.ok(schema.includes("ليست ثلاثية التسليم النهائي")
 assert.ok(productionMethod.includes("لا تطبق فاحصه في المرحلة الأولى"), "validator guidance excludes phase one");
 assert.ok(productionMethod.includes("## الفحص بعد اكتمال المرحلة الثانية"), "validator is a final-phase operation");
 assert.ok(productionMethod.indexOf("## الفحص بعد اكتمال المرحلة الثانية") < productionMethod.indexOf("node scripts/validate-brand-kit.mjs"), "validator command follows the final-phase heading");
+for (const source of [skill, agent, copyPrompt, outputTemplate, exampleOutput, schema, inputContract, productionMethod, sourceRegister]) {
+  assert.ok(!source.includes("--claude-fallback"), "legacy SVG fallback flag is removed");
+  assert.ok(!source.includes("استثناء Claude"), "provider-specific SVG exception is removed");
+}
+assert.ok(schema.includes("صيغة التسليم الوحيدة هي PNG") && productionMethod.includes("لا يقبل الفاحص إلا ثلاثية PNG"), "references define PNG-only delivery");
+assert.ok(validator.includes('ext !== ".png"') && validator.includes("يلزم ثلاثية PNG فقط"), "validator accepts PNG only");
+assert.ok(!validator.includes("svgInfo") && !validator.includes("claudeFallback"), "validator contains no SVG fallback path");
 for (const source of merchantSurfaces) assert.ok(!source.includes("node scripts/validate-brand-kit.mjs"), "merchant prompt does not expose validator commands");
 assertInOrder(outputTemplate, finalOrder, "output template final delivery");
 assertInOrder(exampleOutput, finalOrder, "example final delivery");
