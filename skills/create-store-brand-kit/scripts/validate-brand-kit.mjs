@@ -4,8 +4,6 @@ import path from "node:path";
 import { inflateSync } from "node:zlib";
 
 const args = process.argv.slice(2);
-const claudeFallback = args[0] === "--claude-fallback";
-if (claudeFallback) args.shift();
 const [primary, secondary, catalogArg, logoArg, iconArg] = args;
 const ASSET_MAX_BYTES = 1_950_000;
 const CATALOG_MAX_BYTES = 10_000_000;
@@ -78,66 +76,8 @@ function pngInfo(file, width, height, { requiresAlpha, maxBytes }) {
   return { width: actualWidth, height: actualHeight, bytes: data.length };
 }
 
-const commonSvgAttributes = ["id", "transform", "fill", "fill-opacity", "fill-rule", "stroke", "stroke-width", "stroke-opacity", "stroke-linecap", "stroke-linejoin", "opacity", "clip-path", "clip-rule", "mask"];
-const svgAttributes = new Map([
-  ["svg", new Set(["width", "height", "viewBox", "xmlns"])],
-  ["defs", new Set(["id"])], ["g", new Set(commonSvgAttributes)], ["path", new Set([...commonSvgAttributes, "d"])],
-  ["rect", new Set([...commonSvgAttributes, "x", "y", "width", "height", "rx", "ry"])], ["circle", new Set([...commonSvgAttributes, "cx", "cy", "r"])],
-  ["ellipse", new Set([...commonSvgAttributes, "cx", "cy", "rx", "ry"])], ["line", new Set([...commonSvgAttributes, "x1", "y1", "x2", "y2"])],
-  ["polyline", new Set([...commonSvgAttributes, "points"])], ["polygon", new Set([...commonSvgAttributes, "points"])],
-  ["text", new Set([...commonSvgAttributes, "x", "y", "dx", "dy", "text-anchor", "font-size", "font-weight", "font-family", "letter-spacing"])],
-  ["tspan", new Set([...commonSvgAttributes, "x", "y", "dx", "dy", "text-anchor", "font-size", "font-weight", "font-family", "letter-spacing"])],
-  ["linearGradient", new Set(["id", "x1", "y1", "x2", "y2", "gradientUnits", "gradientTransform"])], ["radialGradient", new Set(["id", "cx", "cy", "r", "fx", "fy", "gradientUnits", "gradientTransform"])],
-  ["stop", new Set(["offset", "stop-color", "stop-opacity"])], ["clipPath", new Set(["id", "clipPathUnits", "transform"])],
-  ["mask", new Set(["id", "x", "y", "width", "height", "maskUnits", "maskContentUnits", "transform"])],
-]);
-const localReferenceAttributes = new Set(["fill", "stroke", "clip-path", "mask"]);
-
-function svgInfo(file, width, height, maxBytes) {
-  if (fs.statSync(file).size > maxBytes) throw new Error(`الحجم يتجاوز ${maxBytes}`);
-  const source = fs.readFileSync(file, "utf8").trim();
-  if (!/^<svg\b[\s\S]*<\/svg>$/u.test(source) || /[&\\]/u.test(source) || /<!(?:DOCTYPE|ENTITY|\[CDATA\[)|<\?/iu.test(source)) throw new Error("ليس SVG آمنًا قائمًا بذاته");
-  const stack = []; const ids = new Set(); const references = []; const tokens = /<[^>]*>/gu; let previous = 0; let match;
-  while ((match = tokens.exec(source))) {
-    const text = source.slice(previous, match.index);
-    if (text.includes("<") || (text.trim() && !stack.some((element) => element === "text" || element === "tspan"))) throw new Error("نص SVG خارج عنصر نصي أو XML غير صالح");
-    const token = match[0]; previous = tokens.lastIndex;
-    if (/^<\//u.test(token)) {
-      const name = token.match(/^<\/([A-Za-z][\w:-]*)\s*>$/u)?.[1];
-      if (!name || stack.pop() !== name) throw new Error("تداخل XML غير صالح");
-      continue;
-    }
-    const selfClosing = /\/\s*>$/u.test(token); const open = token.match(/^<([A-Za-z][\w:-]*)([\s\S]*?)(?:\/\s*)?>$/u);
-    if (!open || !svgAttributes.has(open[1]) || (open[1] === "svg" && (stack.length || match.index !== 0))) throw new Error("عنصر SVG غير مسموح");
-    const [name, attributeText] = [open[1], open[2]]; const attributes = new Set(); let offset = 0;
-    while (offset < attributeText.length) {
-      const whitespace = attributeText.slice(offset).match(/^\s+/u); if (whitespace) { offset += whitespace[0].length; continue; }
-      const attribute = attributeText.slice(offset).match(/^([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/u);
-      if (!attribute) throw new Error("خاصية SVG غير صالحة أو بلا اقتباس");
-      const attributeName = attribute[1]; const value = attribute[2] ?? attribute[3] ?? "";
-      if (attributes.has(attributeName) || !svgAttributes.get(name).has(attributeName) || /[<>&\\]/u.test(value) || /^on/i.test(attributeName) || /^(?:href|xlink:href|style)$/iu.test(attributeName)) throw new Error("خاصية SVG غير مسموحة أو مكررة");
-      attributes.add(attributeName); offset += attribute[0].length;
-      if (attributeName === "id") { if (!/^[A-Za-z_][\w:.-]*$/u.test(value) || ids.has(value)) throw new Error("معرف SVG غير صالح أو مكرر"); ids.add(value); }
-      if (/url\s*\(/iu.test(value)) {
-        const localReference = value.match(/^url\(\s*#([A-Za-z_][\w:.-]*)\s*\)$/u)?.[1];
-        if (!localReference || !localReferenceAttributes.has(attributeName)) throw new Error("url() يجب أن يشير إلى معرف محلي مسموح");
-        references.push(localReference);
-      }
-    }
-    if (name === "svg" && (attributes.size !== 4 || !attributes.has("width") || !attributes.has("height") || !attributes.has("viewBox") || !attributes.has("xmlns"))) throw new Error("خصائص svg الجذر غير مكتملة");
-    if (name === "svg") {
-      const root = Object.fromEntries([...attributes].map((key) => [key, attributeText.match(new RegExp(`\\b${key}\\s*=\\s*["']([^"']*)["']`, "u"))?.[1]]));
-      if (root.width !== String(width) || root.height !== String(height) || root.viewBox !== `0 0 ${width} ${height}` || root.xmlns !== "http://www.w3.org/2000/svg") throw new Error("العرض أو الارتفاع أو viewBox أو xmlns غير مطابق");
-    }
-    if (!selfClosing) stack.push(name);
-  }
-  const trailing = source.slice(previous); if (trailing.includes("<") || trailing.trim() || stack.length) throw new Error("بنية XML غير مكتملة");
-  for (const id of references) if (!ids.has(id)) throw new Error(`مرجع محلي مفقود: #${id}`);
-  return { width, height, bytes: Buffer.byteLength(source) };
-}
-
-if (args.some((arg) => arg.startsWith("--"))) fail("علم غير معروف؛ العلم الوحيد المسموح هو --claude-fallback قبل الوسائط");
-if (![primary, secondary, catalogArg, logoArg, iconArg].every(Boolean) || args.length !== 5) fail("الاستخدام: node scripts/validate-brand-kit.mjs [--claude-fallback] <primary-hex> <secondary-hex> <catalog-asset> <logo-asset> <icon-asset>");
+if (args.some((arg) => arg.startsWith("--"))) fail("لا توجد أعلام fallback؛ يقبل الفاحص ثلاثية PNG فقط");
+if (![primary, secondary, catalogArg, logoArg, iconArg].every(Boolean) || args.length !== 5) fail("الاستخدام: node scripts/validate-brand-kit.mjs <primary-hex> <secondary-hex> <catalog-asset> <logo-asset> <icon-asset>");
 if (primary && !HEX.test(primary)) fail("Primary يجب أن يكون HEX من ست خانات");
 if (secondary && !HEX.test(secondary)) fail("Secondary يجب أن يكون HEX من ست خانات");
 if (primary?.toLowerCase() === secondary?.toLowerCase()) fail("Primary وSecondary يجب أن يكونا مختلفين");
@@ -147,16 +87,14 @@ if (catalogArg && logoArg && iconArg) {
   const catalog = path.resolve(catalogArg); const logo = path.resolve(logoArg); const icon = path.resolve(iconArg); directory = path.dirname(catalog);
   if (path.dirname(logo) !== directory || path.dirname(icon) !== directory) fail("يجب أن تكون الصور الثلاث في مجلد تسليم واحد");
   const ext = path.extname(catalog).toLowerCase(); const logoExt = path.extname(logo).toLowerCase(); const iconExt = path.extname(icon).toLowerCase();
-  if (![".png", ".svg"].includes(ext) || ext !== logoExt || ext !== iconExt) fail("يلزم ثلاثية PNG أو ثلاثية SVG متطابقة، دون خلط الصيغ");
+  if (ext !== ".png" || logoExt !== ".png" || iconExt !== ".png") fail("يلزم ثلاثية PNG فقط؛ SVG أو أي امتداد آخر مرفوض");
   else {
-    mode = ext.slice(1);
-    if (mode === "svg" && !claudeFallback) fail("SVG يتطلب --claude-fallback لاستثناء Claude فقط");
-    if (mode === "png" && claudeFallback) fail("--claude-fallback مخصص لثلاثية SVG فقط");
-    const expected = mode === "png" ? ["brand-catalog.png", "logo-ar.png", "store-icon.png"] : ["brand-catalog.svg", "logo-ar.svg", "store-icon.svg"];
+    mode = "png";
+    const expected = ["brand-catalog.png", "logo-ar.png", "store-icon.png"];
     if ([path.basename(catalog), path.basename(logo), path.basename(icon)].some((name, index) => name !== expected[index])) fail(`الأسماء المطلوبة: ${expected.join(" و ")}`);
-    try { inspected.catalog = mode === "png" ? pngInfo(catalog, 1536, 1024, { requiresAlpha: false, maxBytes: CATALOG_MAX_BYTES }) : svgInfo(catalog, 1536, 1024, CATALOG_MAX_BYTES); } catch (error) { fail(`catalog: ${error.message}`); }
-    try { inspected.logo = mode === "png" ? pngInfo(logo, 1024, 256, { requiresAlpha: true, maxBytes: ASSET_MAX_BYTES }) : svgInfo(logo, 1024, 256, ASSET_MAX_BYTES); } catch (error) { fail(`logo: ${error.message}`); }
-    try { inspected.icon = mode === "png" ? pngInfo(icon, 32, 32, { requiresAlpha: true, maxBytes: ASSET_MAX_BYTES }) : svgInfo(icon, 32, 32, ASSET_MAX_BYTES); } catch (error) { fail(`icon: ${error.message}`); }
+    try { inspected.catalog = pngInfo(catalog, 1536, 1024, { requiresAlpha: false, maxBytes: CATALOG_MAX_BYTES }); } catch (error) { fail(`catalog: ${error.message}`); }
+    try { inspected.logo = pngInfo(logo, 1024, 256, { requiresAlpha: true, maxBytes: ASSET_MAX_BYTES }); } catch (error) { fail(`logo: ${error.message}`); }
+    try { inspected.icon = pngInfo(icon, 32, 32, { requiresAlpha: true, maxBytes: ASSET_MAX_BYTES }); } catch (error) { fail(`icon: ${error.message}`); }
     if (fs.existsSync(directory)) for (const entry of fs.readdirSync(directory, { withFileTypes: true })) if (entry.isFile() && LEGACY_FORBIDDEN_ARTIFACTS.has(entry.name)) fail(`${entry.name}: أثر قديم محظور`);
   }
 }
