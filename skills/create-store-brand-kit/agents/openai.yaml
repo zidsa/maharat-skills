@@ -1,4 +1,4 @@
 interface:
   display_name: "أنشئ هوية المتجر"
-  short_description: "كتالوج PNG وشعار عربي وأيقونة PNG متطابقة"
-  default_prompt: "استخدم $create-store-brand-kit لإنشاء ثلاث صور PNG مستقلة: brand-catalog.png 1536x1024 ثم logo-ar.png 1024x256 شفاف ثم store-icon.png 32x32 شفافة، ثم سطري Primary وSecondary HEX. إذا لم تتوفر قدرة توليد أو حفظ PNG، أخرج فقط: تعذر إنشاء وإرفاق ملفات PNG الثلاثة الفعلية في هذه البيئة."
+  short_description: "هوية عربية مميزة: كتالوج وشعار وأيقونة مستقلة"
+  default_prompt: "استخدم $create-store-brand-kit: ابدأ بفكرة أصلية من الاسم والمنتجات واختر أكثر الاتجاهات تميزًا داخليًا، مع حرية في الخط والتكوين والدرجات والتدرجات. استخدم أداة إنشاء الصور المدمجة في المنصة الحالية بصمت، ولا تذكر اسمها أو تطلب تطبيقًا أو خدمة خارجية. ثم سلّم brand-catalog.png 1536x1024 وlogo-ar.png 1024x256 شفافًا وstore-icon.png 32x32 شفافًا، كمرفقات مستقلة بالترتيب، ثم Primary وSecondary HEX."
