@@ -171,8 +171,10 @@ for (const source of [skill, copyPrompt, productionMethod, schema]) {
 }
 for (const source of [skill, copyPrompt, schema]) assert.ok(source.includes("لا تقيّد"), "official colors do not constrain logo creativity");
 assert.ok(productionMethod.includes("ليس قيدًا يحصر إبداعه"), "production treats official colors as post-logo verification");
-assert.ok(exampleOutput.includes("#D6A15B") && exampleOutput.includes("#F3E2C9"), "gold example maps visible mark colors");
-assert.ok(exampleOutput.includes("#17120F") && exampleOutput.includes("خلفية عرض لا مساحة داخل العلامة"), "gold example rejects the dark presentation background");
+assert.ok(productionMethod.includes("لا تثبّت اللونين من لوحة التصور أو من خلفية العرض"), "production rejects presentation backgrounds as official colors");
+const exampleFinal = exampleOutput.match(/## الرد النهائي بعد الاختيار\n([\s\S]*)/u)?.[1] || "";
+assert.deepEqual([...exampleFinal.matchAll(/#[0-9A-F]{6}/gu)].map((match) => match[0]), ["#D6A15B", "#F3E2C9"], "example final contains only the two official mark colors");
+assert.ok(!exampleFinal.includes("#17120F") && !exampleFinal.includes("قرار داخلي"), "example final excludes presentation-background rationale and color");
 
 assert.ok(productionMethod.includes("Python/Pillow") && productionMethod.includes("بعد توليد الأصل بصريًا"));
 assert.ok(productionMethod.includes("إزالة الخلفية") && productionMethod.includes("الحفاظ على النسبة") && productionMethod.includes("بلا قص"));
