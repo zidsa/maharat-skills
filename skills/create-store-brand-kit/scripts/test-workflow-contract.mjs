@@ -79,6 +79,8 @@ for (const [index, source] of fullRunPrompts.entries()) {
   const iconPosition = source.indexOf("عملية الأيقونة");
   assert.ok(verificationPosition >= 0 && iconPosition > verificationPosition, `${label} verifies the rendered name before icon generation`);
   assert.ok(source.includes("حرفًا بحرف") && source.includes("صورة الشعار نفسها"), `${label} verifies and edits the same logo`);
+  assert.ok(source.includes("ناتج التعديل الفعلي") && source.includes("حدّث") && source.includes("finalLogoReference"), `${label} waits for and stores the corrected logo result`);
+  assert.ok(source.includes("أعد فحص الاسم") || source.includes("أعد فحصه"), `${label} rechecks the corrected logo before the icon`);
   assert.ok(source.includes("approvedBoardReference") && source.includes("من الصفر"), `${label} creates the logo from scratch from the approved board`);
   assert.ok(source.includes("finalLogoReference") || source.includes("logo-ar.png النهائية"), `${label} uses the final logo as icon reference`);
   assert.ok(source.includes("رمز جديد") || source.includes("رمزًا جديدًا") || source.includes("لا تعِد ابتكار الرمز"), `${label} forbids a new icon symbol`);
