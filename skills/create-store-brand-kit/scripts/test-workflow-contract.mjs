@@ -56,7 +56,7 @@ for (const [index, source] of fullRunPrompts.entries()) {
   const label = `full run prompt ${index + 1}`;
 
   assert.equal(source.split(approvalQuestion).length - 1, 1, `${label} contains one approval question`);
-  assert.ok(source.includes("عملية إنشاء صورة واحدة فقط") || source.includes("عملية صورة واحدة فقط"), `${label} requests one preview image operation`);
+  assert.ok(source.includes("BOARD_ONLY") && source.includes("استدعاء صورة واحد"), `${label} requests one isolated preview image operation`);
   assert.ok(source.includes("لوحة معدلة واحدة فقط"), `${label} feedback creates one revised board`);
   assert.ok(source.includes("أحدث لوحة مرئية") && source.includes("latestBoardReference"), `${label} revisions and approval bind the latest visible board`);
   assert.ok(source.includes("فشل تقني") && source.includes("لم تظهر أي صورة"), `${label} retries only a technical no-image result`);
@@ -82,8 +82,15 @@ for (const [index, source] of fullRunPrompts.entries()) {
   assert.ok(source.includes("approvedBoardReference") && source.includes("من الصفر"), `${label} creates the logo from scratch from the approved board`);
   assert.ok(source.includes("finalLogoReference") || source.includes("logo-ar.png النهائية"), `${label} uses the final logo as icon reference`);
   assert.ok(source.includes("رمز جديد") || source.includes("رمزًا جديدًا") || source.includes("لا تعِد ابتكار الرمز"), `${label} forbids a new icon symbol`);
-  assert.ok(source.includes("pendingFinalAsset") && source.includes("عملية صورة واحدة"), `${label} supports one-image-per-turn continuation`);
-  assert.ok(source.includes("طلب صورة قصيرًا ومستقلًا") && source.includes("لا تمرر") && source.includes("الكامل"), `${label} keeps image operations in separate short prompts`);
+  assert.ok(source.includes("LOGO_ONLY") && source.includes("ICON_ONLY"), `${label} defines isolated final image calls`);
+  assert.ok(source.includes("لا تمرر") && source.includes("البرومبت") && source.includes("الشامل"), `${label} never forwards the master prompt to image generation`);
+  assert.ok(source.includes("طلب صورة واحد = أصل واحد") && source.includes("canvas"), `${label} enforces one call per asset and canvas`);
+  assert.ok(source.includes("لا تكتب للتاجر ولا تتوقف"), `${label} silently chains logo and icon calls`);
+  assert.ok(source.includes("انتظر نتيجة") && source.includes("finalLogoReference"), `${label} waits for and stores the actual logo result`);
+  assert.ok(source.includes("صورة finalLogoReference الفعلية") || source.includes("صورة `finalLogoReference` الفعلية"), `${label} passes the actual logo image to the icon call`);
+  assert.ok(source.includes("فقط إذا رفضت المنصة") && source.includes("فعليًا"), `${label} resumes only after an actual platform rejection`);
+  assert.ok(source.includes("لا تفترض مسبقًا") || source.includes("لا تفترض مسبقًا حد"), `${label} does not preselect a one-image-per-reply fallback`);
+  assert.ok(!source.includes("pendingFinalAsset"), `${label} removes the proactive pending-asset branch`);
 
   assertInOrder(source, finalOrder, `${label} final delivery`);
   assert.ok(!source.includes("brand-catalog.png"), `${label} does not require a catalog file`);
@@ -98,9 +105,25 @@ for (const forbiddenPreviewContract of [/logo-ar\.png/u, /store-icon\.png/u, /10
 }
 assert.ok(previewSection.includes("لا مقارنة ولا بدائل ولا عناوين اختيار"));
 assert.ok(previewSection.includes("لا تضف") && previewSection.includes("أرقامًا"));
+assert.ok(previewSection.includes("`BOARD_ONLY` وحده"), "preview invokes only BOARD_ONLY");
+
+const isolationSection = markdownSection(skill, "## عزل طلبات الصور", "## ترتيب الحالة");
+assert.ok(isolationSection.includes("`BOARD_ONLY`") && isolationSection.includes("`LOGO_ONLY`") && isolationSection.includes("`ICON_ONLY`"));
+assert.ok(isolationSection.includes("لا تمرر نص المهارة الكامل") || skill.includes("لا تمرره كله"));
+assert.ok(isolationSection.includes("طلب صورة واحد = أصل واحد = لوحة/ملف واحد"));
+assert.ok(isolationSection.includes("لا تجمع أصلين") && isolationSection.includes("mega prompt"));
+
+const finalSection = markdownSection(skill, "## الأصول النهائية بعد الاعتماد", "## عقد التسليم النهائي");
+assertInOrder(finalSection, ["`LOGO_ONLY` وحده", "انتظر نتيجة الاستدعاء الفعلية", "finalLogoReference", "### بوابة الاسم", "finalNameVerified = true", "`ICON_ONLY` وحده", "صورة `finalLogoReference` الفعلية"], "skill approval controller");
+assert.ok(finalSection.includes("لا تكتب للتاجر ولا تتوقف بين استدعاء الشعار واستدعاء الأيقونة"));
+assert.ok(finalSection.includes("لا تؤجل الأيقونة اختياريًا"));
+
+const copyApprovalController = copyPrompt.slice(copyPrompt.indexOf("بعد الاعتماد فقط"));
+assertInOrder(copyApprovalController, ["LOGO_ONLY وحده", "انتظر نتيجة الصورة الفعلية", "finalLogoReference", "بوابة الاسم", "finalNameVerified = true", "ICON_ONLY وحده", "صورة finalLogoReference الفعلية"], "copy-paste approval controller");
+assert.ok(copyApprovalController.includes("لا تكتب للتاجر ولا تتوقف بين استدعاء الشعار واستدعاء الأيقونة"));
 
 for (const source of runtimeSurfaces) {
-  for (const obsolete of ["optionMap", "optionBriefs", "selectedReference", "الخيار 1", "الخيار 2", "الخيار 3", "<single-image-prompt>", "</single-image-prompt>", "<!--", "-->", "concept-1.png", "concept-2.png", "concept-3.png", "brand-catalog.png", "1536x1024", "[صورة"]) {
+  for (const obsolete of ["optionMap", "optionBriefs", "selectedReference", "pendingFinalAsset", "الخيار 1", "الخيار 2", "الخيار 3", "<single-image-prompt>", "</single-image-prompt>", "<!--", "-->", "concept-1.png", "concept-2.png", "concept-3.png", "brand-catalog.png", "1536x1024", "[صورة"]) {
     assert.ok(!source.includes(obsolete), `runtime content excludes obsolete/leaky token ${obsolete}`);
   }
   for (const provider of ["Claude", "ChatGPT", "Gemini", "Manus", "Canva"]) {
@@ -112,15 +135,25 @@ for (const source of runtimeSurfaces) {
 const defaultPrompt = agent.match(/^  default_prompt: "(.*)"$/mu)?.[1] || "";
 assert.ok(defaultPrompt.startsWith("استخدم $create-store-brand-kit"));
 assert.ok(defaultPrompt.includes("لوحة هوية واحدة فقط") && defaultPrompt.includes("أحدث لوحة معتمدة"));
+assert.ok(defaultPrompt.includes("استدعاءين منفصلين متتابعين دون توقف"));
 assert.equal(defaultPrompt.split("\n").length, 1);
 
 assert.ok(outputTemplate.includes("نتيجة صورة واحدة فعلية") && outputTemplate.includes(approvalQuestion));
 assert.ok(outputTemplate.includes("لوحة معدلة واحدة فقط"));
+assert.ok(outputTemplate.includes("`LOGO_ONLY`") && outputTemplate.includes("`ICON_ONLY`") && outputTemplate.includes("لا يكتب المساعد أي نص للتاجر ولا ينهي الرد"));
 assert.ok(exampleOutput.includes("لوحة هوية واحدة فعلية") && exampleOutput.includes("لوحة معدلة واحدة فعلية"));
+assert.ok(exampleOutput.includes("طلب `LOGO_ONLY`") && exampleOutput.includes("طلب `ICON_ONLY`") && exampleOutput.includes("لا يظهر بين الاستدعاءين رد مرحلي"));
 assert.ok(inputContract.includes("يجوز استخدام `trim` لاختبار") && inputContract.includes("لا تحفظ ناتج التقليم"));
 assert.ok(schema.includes("approvedBoardReference = latestBoardReference"));
 assert.ok(productionMethod.includes("لا تقص اللوحة") && productionMethod.includes("لا تعيد إنشاءها"));
 assert.ok(sourceRegister.includes("المعاينة عملية صورة واحدة"));
+assert.ok(productionMethod.includes("البرومبت الشامل يضبط الحالة والتسلسل فقط") && productionMethod.includes("لا تكتب للتاجر ولا تتوقف بين استدعائي الشعار والأيقونة"));
+assert.ok(sourceRegister.includes("البرومبت الشامل متحكم فقط") && sourceRegister.includes("لا يظهر رد مرحلي ولا توقف اختياري"));
+
+for (const source of [skill, copyPrompt, outputTemplate, exampleOutput, productionMethod, schema, sourceRegister]) {
+  assert.ok(!source.includes("pendingFinalAsset"), "runtime contract removes pendingFinalAsset");
+  assert.doesNotMatch(source, /إذا كانت المنصة (?:لا )?تسمح (?:إلا )?بعملية صورة واحدة/u, "runtime contract does not proactively branch on one image per reply");
+}
 
 for (const source of [skill, copyPrompt, productionMethod, schema]) {
   for (const rule of ["الشعار النهائي", "الأكثر حضورًا", "داعم ظاهر", "الظلال", "اللمعات", "الانعكاسات", "الأسود أو الأبيض", "HEX مسطح"]) {
