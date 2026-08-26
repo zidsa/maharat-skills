@@ -26,6 +26,7 @@ const runtimeSurfaces = [
   schema,
 ];
 const approvalQuestion = "هل تعتمد هذه الهوية، أو تبي تعديلًا محددًا؟";
+const nameFailureMessage = "تعذر تثبيت اسم المتجر حرفيًا بعد محاولتي تصحيح؛ توقفت قبل إنشاء الأيقونة والتسليم النهائي.";
 const finalOrder = ["logo-ar.png", "store-icon.png", "1. اللون الأساسي: #RRGGBB", "2. اللون الثانوي: #RRGGBB"];
 const finalLabelOrder = ["logo-ar.png", "store-icon.png", "1. اللون الأساسي:", "2. اللون الثانوي:"];
 
@@ -81,6 +82,11 @@ for (const [index, source] of fullRunPrompts.entries()) {
   assert.ok(source.includes("حرفًا بحرف") && source.includes("صورة الشعار نفسها"), `${label} verifies and edits the same logo`);
   assert.ok(source.includes("ناتج التعديل الفعلي") && source.includes("حدّث") && source.includes("finalLogoReference"), `${label} waits for and stores the corrected logo result`);
   assert.ok(source.includes("أعد فحص الاسم") || source.includes("أعد فحصه"), `${label} rechecks the corrected logo before the icon`);
+  assert.ok(source.includes("nameCorrectionAttempts = 0"), `${label} initializes the correction counter after LOGO_ONLY`);
+  assert.ok(source.includes("nameCorrectionAttempts < 2") && source.includes("nameCorrectionAttempts += 1"), `${label} caps and counts correction attempts`);
+  assert.ok(source.includes("محاولتا تصحيح") && source.includes(nameFailureMessage), `${label} stops explicitly after two failed corrections`);
+  assert.ok(source.includes("لا تنفّذ `ICON_ONLY`") || source.includes("لا تنفّذ ICON_ONLY"), `${label} forbids the icon after exhausted corrections`);
+  assert.ok(source.includes("لا تستخرج اللونين") && (source.includes("لا تسلّم") || source.includes("لا تسلّم ملفات")), `${label} forbids colors and final delivery after exhausted corrections`);
   assert.ok(source.includes("approvedBoardReference") && source.includes("من الصفر"), `${label} creates the logo from scratch from the approved board`);
   assert.ok(source.includes("finalLogoReference") || source.includes("logo-ar.png النهائية"), `${label} uses the final logo as icon reference`);
   assert.ok(source.includes("رمز جديد") || source.includes("رمزًا جديدًا") || source.includes("لا تعِد ابتكار الرمز"), `${label} forbids a new icon symbol`);
@@ -120,9 +126,46 @@ assertInOrder(finalSection, ["`LOGO_ONLY` وحده", "انتظر نتيجة ال
 assert.ok(finalSection.includes("لا تكتب للتاجر ولا تتوقف بين استدعاء الشعار واستدعاء الأيقونة"));
 assert.ok(finalSection.includes("لا تؤجل الأيقونة اختياريًا"));
 
+const skillNameGate = markdownSection(skill, "### بوابة الاسم", "### عملية الأيقونة");
+assert.ok(skillNameGate.includes("nameCorrectionAttempts < 2") && skillNameGate.includes("nameCorrectionAttempts = 2"));
+assert.ok(skillNameGate.includes("توقف فورًا") && skillNameGate.includes(nameFailureMessage));
+assert.ok(!skillNameGate.includes("كرر بوابة الاسم"), "name gate has no unbounded correction loop");
+
 const copyApprovalController = copyPrompt.slice(copyPrompt.indexOf("بعد الاعتماد فقط"));
 assertInOrder(copyApprovalController, ["LOGO_ONLY وحده", "انتظر نتيجة الصورة الفعلية", "finalLogoReference", "بوابة الاسم", "finalNameVerified = true", "ICON_ONLY وحده", "صورة finalLogoReference الفعلية"], "copy-paste approval controller");
 assert.ok(copyApprovalController.includes("لا تكتب للتاجر ولا تتوقف بين استدعاء الشعار واستدعاء الأيقونة"));
+
+const copyNameGate = copyPrompt.slice(copyPrompt.indexOf("بوابة الاسم:"), copyPrompt.indexOf("عملية الأيقونة:"));
+assert.ok(copyNameGate.includes("nameCorrectionAttempts < 2") && copyNameGate.includes("nameCorrectionAttempts = 2"));
+assert.ok(copyNameGate.includes(nameFailureMessage));
+
+const correctionCap = Number(skillNameGate.match(/nameCorrectionAttempts < (\d+)/u)?.[1]);
+assert.equal(correctionCap, 2, "negative name gate contract allows exactly two corrections");
+
+function runNameGate(initialVerified, correctionResults) {
+  let finalNameVerified = initialVerified;
+  let nameCorrectionAttempts = 0;
+  while (!finalNameVerified && nameCorrectionAttempts < correctionCap) {
+    finalNameVerified = correctionResults[nameCorrectionAttempts] === true;
+    nameCorrectionAttempts += 1;
+  }
+  return {
+    finalNameVerified,
+    nameCorrectionAttempts,
+    nextOperation: finalNameVerified ? "ICON_ONLY" : "STOP_NO_DELIVERY",
+  };
+}
+
+assert.deepEqual(runNameGate(false, [false, false, true]), {
+  finalNameVerified: false,
+  nameCorrectionAttempts: 2,
+  nextOperation: "STOP_NO_DELIVERY",
+}, "a third correction is never attempted and ICON_ONLY is not reached");
+assert.deepEqual(runNameGate(false, [false, true]), {
+  finalNameVerified: true,
+  nameCorrectionAttempts: 2,
+  nextOperation: "ICON_ONLY",
+}, "ICON_ONLY is reached only when a correction verifies the name within the cap");
 
 for (const source of runtimeSurfaces) {
   for (const obsolete of ["optionMap", "optionBriefs", "selectedReference", "pendingFinalAsset", "الخيار 1", "الخيار 2", "الخيار 3", "<single-image-prompt>", "</single-image-prompt>", "<!--", "-->", "concept-1.png", "concept-2.png", "concept-3.png", "brand-catalog.png", "1536x1024", "[صورة"]) {
@@ -143,14 +186,19 @@ assert.equal(defaultPrompt.split("\n").length, 1);
 assert.ok(outputTemplate.includes("نتيجة صورة واحدة فعلية") && outputTemplate.includes(approvalQuestion));
 assert.ok(outputTemplate.includes("لوحة معدلة واحدة فقط"));
 assert.ok(outputTemplate.includes("`LOGO_ONLY`") && outputTemplate.includes("`ICON_ONLY`") && outputTemplate.includes("لا يكتب المساعد أي نص للتاجر ولا ينهي الرد"));
+assert.ok(outputTemplate.includes("محاولتي تصحيح") && outputTemplate.includes(nameFailureMessage));
 assert.ok(exampleOutput.includes("لوحة هوية واحدة فعلية") && exampleOutput.includes("لوحة معدلة واحدة فعلية"));
 assert.ok(exampleOutput.includes("طلب `LOGO_ONLY`") && exampleOutput.includes("طلب `ICON_ONLY`") && exampleOutput.includes("لا يظهر بين الاستدعاءين رد مرحلي"));
+assert.ok(exampleOutput.includes("مثال التوقف عند استمرار خطأ الاسم") && exampleOutput.includes(nameFailureMessage));
 assert.ok(inputContract.includes("يجوز استخدام `trim` لاختبار") && inputContract.includes("لا تحفظ ناتج التقليم"));
+assert.ok(inputContract.includes("محاولتي تصحيح") && inputContract.includes("لا تبدأ محاولة ثالثة"));
 assert.ok(schema.includes("approvedBoardReference = latestBoardReference"));
+assert.ok(schema.includes("nameCorrectionAttempts = 2") && schema.includes(nameFailureMessage));
 assert.ok(productionMethod.includes("لا تقص اللوحة") && productionMethod.includes("لا تعيد إنشاءها"));
 assert.ok(sourceRegister.includes("المعاينة عملية صورة واحدة"));
 assert.ok(productionMethod.includes("البرومبت الشامل يضبط الحالة والتسلسل فقط") && productionMethod.includes("لا تكتب للتاجر ولا تتوقف بين استدعائي الشعار والأيقونة"));
 assert.ok(sourceRegister.includes("البرومبت الشامل متحكم فقط") && sourceRegister.includes("لا يظهر رد مرحلي ولا توقف اختياري"));
+assert.ok(sourceRegister.includes("محاولتي تصحيح فقط") && sourceRegister.includes("بلا `ICON_ONLY`"));
 
 for (const source of [skill, copyPrompt, outputTemplate, exampleOutput, productionMethod, schema, sourceRegister]) {
   assert.ok(!source.includes("pendingFinalAsset"), "runtime contract removes pendingFinalAsset");
