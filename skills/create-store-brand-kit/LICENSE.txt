@@ -1,4 +1,7 @@
-Copyright © 2026 Abdulrahman Alnashri. All rights reserved.
+Copyright © 2026 Zid. All rights reserved.
 
-هذه الحزمة متاحة للاستخدام الشخصي والتشغيلي من المستودع العام.
-لا يجوز إعادة بيعها أو إعادة نشرها باسم منشئ آخر دون إذن خطي.
+This package is available for personal and operational use from the official
+zidsa/maharat-skills repository.
+
+It may not be resold or republished under another creator's name without prior
+written permission from Zid.
