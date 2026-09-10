@@ -1,0 +1,4 @@
+interface:
+  display_name: "جهّز حملة واتساب"
+  short_description: "حدّد الشريحة والرسائل والتوقف والقياس"
+  default_prompt: "استخدم $plan-whatsapp-campaign لبناء حملة واتساب قصيرة وآمنة."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "صوّر فيديو TikTok لمنتجك"
+  short_description: "حوّل حقائق المنتج إلى خطة تصوير فيديو قصيرة"
+  default_prompt: "استخدم $prepare-tiktok-shoot لتجهيز تصوير فيديو TikTok لمنتج من حقائق موثقة."

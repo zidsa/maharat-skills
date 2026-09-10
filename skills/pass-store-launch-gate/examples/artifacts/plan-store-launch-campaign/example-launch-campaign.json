@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "status": "ready",
+  "campaign": {"id":"launch-coffee-01","launch_type":"new_store","market":"SA","currency":"SAR","timezone":"Asia/Riyadh","start_at":"2026-09-01T09:00:00+03:00","end_at":"2026-09-08T23:59:00+03:00","objective":"first_orders"},
+  "audience": {"segment":"مبتدئون يريدون مجموعة قهوة أولى واضحة","need":"اختيار متوافق دون شراء قطع متعارضة","evidence_refs":["src-audience"]},
+  "source_register": [
+    {"id":"src-brief","type":"merchant_brief","reference":"artifacts/launch/brief.md#approved","observed_at":"2026-08-20","scope":"الهدف والمالك"},
+    {"id":"src-audience","type":"audience_research","reference":"artifacts/research/problem.json#segment-beginner","observed_at":"2026-08-18","scope":"الشريحة والحاجة"},
+    {"id":"src-catalog","type":"catalog_export","reference":"artifacts/catalog/starter.json#approved","observed_at":"2026-08-19","scope":"توافق منتجات مجموعة البداية"},
+    {"id":"src-price","type":"pricing_config","reference":"artifacts/launch/pricing.json#starter-10","observed_at":"2026-08-21","scope":"خصم مجموعة البداية"},
+    {"id":"src-brand","type":"brand_system","reference":"artifacts/brand/system.json#approved","observed_at":"2026-08-10","scope":"النبرة"},
+    {"id":"src-measure","type":"measurement_plan","reference":"artifacts/launch/measurement.json#v1","observed_at":"2026-08-22","scope":"القياس"},
+    {"id":"spec-instagram","type":"channel_spec","channel_type":"instagram","reference":"https://www.facebook.com/business/help/103816146375741","observed_at":"2026-08-22","scope":"مواصفات أصل Instagram"},
+    {"id":"spec-whatsapp","type":"channel_spec","channel_type":"whatsapp","reference":"https://business.whatsapp.com/products/business-platform","observed_at":"2026-08-22","scope":"مواصفات رسالة WhatsApp"}
+  ],
+  "facts": [
+    {"id":"fact-discount","type":"offer","statement":"خصم 10% على مجموعة البداية خلال فترة الحملة","source_ref":"src-price","approved":true,"allowed_copy":["خصم 10%","خصم 10% على مجموعة البداية خلال فترة الحملة"]},
+    {"id":"fact-compatible","type":"product","statement":"المجموعة تجمع أدوات متوافقة للمبتدئ","source_ref":"src-catalog","approved":true,"allowed_copy":["المجموعة تجمع أدوات متوافقة للمبتدئ","أدوات متوافقة للمبتدئ"]}
+  ],
+  "offer": {"type":"discount","name":"خصم مجموعة البداية","claim":"خصم 10%","fact_ref":"fact-discount","source_ref":"src-price","terms_ref":"https://store.example/launch-terms","starts_at":"2026-09-01T09:00:00+03:00","ends_at":"2026-09-08T23:59:00+03:00"},
+  "channels": [
+    {"id":"ch-instagram","type":"instagram","role":"اكتشاف المجموعة","owner":"مالك المحتوى","spec_source_ref":"spec-instagram","landing_url":"https://store.example/collections/starter","spend_mode":"paid","budget":{"currency":"SAR","amount":1500}},
+    {"id":"ch-whatsapp","type":"whatsapp","role":"إبلاغ قائمة موافقة مسبقًا","owner":"مالك CRM","spec_source_ref":"spec-whatsapp","landing_url":"https://store.example/collections/starter","spend_mode":"organic","budget":{"currency":"SAR","amount":0}}
+  ],
+  "assets": [
+    {"id":"asset-ig-01","type":"feed_post","channel_refs":["ch-instagram"],"headline":"ابدأ قهوتك بأدوات متوافقة للمبتدئ","body":"مجموعة بداية واضحة مع خصم 10% حتى نهاية الحملة.","cta":"استكشف المجموعة","url":"https://store.example/collections/starter","claims":[{"fact_ref":"fact-compatible","text":"أدوات متوافقة للمبتدئ"},{"fact_ref":"fact-discount","text":"خصم 10%"}],"status":"approved"},
+    {"id":"asset-wa-01","type":"message","channel_refs":["ch-whatsapp"],"headline":"مجموعة البداية جاهزة","body":"خصم 10% على مجموعة البداية حتى 8 سبتمبر.","cta":"شاهد المجموعة","url":"https://store.example/collections/starter","claims":[{"fact_ref":"fact-discount","text":"خصم 10%"}],"status":"approved"}
+  ],
+  "schedule": [
+    {"id":"slot-ig","channel_ref":"ch-instagram","asset_ref":"asset-ig-01","publish_at":"2026-09-01T10:00:00+03:00","owner":"مالك المحتوى"},
+    {"id":"slot-wa","channel_ref":"ch-whatsapp","asset_ref":"asset-wa-01","publish_at":"2026-09-01T12:00:00+03:00","owner":"مالك CRM"}
+  ],
+  "blockers": []
+}

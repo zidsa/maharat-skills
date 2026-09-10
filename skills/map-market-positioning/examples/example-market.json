@@ -1,0 +1,104 @@
+{
+  "market_scope": {
+    "country": "السعودية",
+    "segment": "مشروع منزلي يطلب أقل من 100 صندوق في المرة",
+    "job_or_occasion": "تجهيز دفعة طلبات خلال أسبوع دون شراء مخزون كبير",
+    "observed_at": "2026-08-01",
+    "currency": "SAR",
+    "price_basis": "SAR للوحدة بعد الضريبة وقبل الشحن",
+    "store_evidence_domains": ["store.example"]
+  },
+  "criteria": [
+    {
+      "id": "min-order",
+      "label": "حد الطلب الأدنى",
+      "why_it_matters": "العميل لا يريد تجميد سيولة في كمية تفوق دفعة الطلبات",
+      "evidence_ref": "https://research.example/round-2#claim-1"
+    },
+    {
+      "id": "delivery-clarity",
+      "label": "وضوح موعد الوصول",
+      "why_it_matters": "تأخر العبوات يؤخر تسليم الطلبات النهائية",
+      "evidence_ref": "https://research.example/round-2#claim-2"
+    }
+  ],
+  "alternatives": [
+    {
+      "id": "wholesale-a",
+      "name": "مورد جملة أ",
+      "type": "direct",
+      "source_url": "https://supplier.example/boxes",
+      "observed_at": "2026-08-01",
+      "offer": "صناديق تغليف تباع بكرتون كامل",
+      "price": {"value": 1.4, "currency": "SAR", "basis": "SAR للوحدة بعد الضريبة وقبل الشحن", "original_quantity": 500},
+      "proof_refs": ["https://supplier.example/boxes#minimum"],
+      "limitations": ["موعد الوصول النهائي غير ظاهر قبل إدخال العنوان"]
+    },
+    {
+      "id": "manual-retail",
+      "name": "شراء متفرق من متجر تجزئة",
+      "type": "indirect",
+      "source_url": "https://retail.example/packaging",
+      "observed_at": "2026-08-01",
+      "offer": "عبوات صغيرة متاحة للشراء الفوري",
+      "price": {"value": 3.2, "currency": "SAR", "basis": "SAR للوحدة بعد الضريبة وقبل الشحن", "original_quantity": 20},
+      "proof_refs": ["https://retail.example/packaging#price"],
+      "limitations": ["التوفر يتغير ولا توجد سياسة حجز موثقة"]
+    }
+  ],
+  "comparisons": [
+    {
+      "alternative_id": "wholesale-a",
+      "criterion_id": "min-order",
+      "own_value": "حد أدنى 25 صندوقًا",
+      "alternative_value": "500 صندوق",
+      "status": "observed",
+      "own_evidence_refs": ["https://store.example/boxes#minimum"],
+      "alternative_evidence_refs": ["https://supplier.example/boxes#minimum"]
+    },
+    {
+      "alternative_id": "wholesale-a",
+      "criterion_id": "delivery-clarity",
+      "own_value": "unknown",
+      "alternative_value": "unknown",
+      "status": "unknown",
+      "own_evidence_refs": [],
+      "alternative_evidence_refs": []
+    },
+    {
+      "alternative_id": "manual-retail",
+      "criterion_id": "min-order",
+      "own_value": "25 صندوقًا",
+      "alternative_value": "20 صندوقًا",
+      "status": "observed",
+      "own_evidence_refs": ["https://store.example/boxes#minimum"],
+      "alternative_evidence_refs": ["https://retail.example/packaging#quantity"]
+    },
+    {
+      "alternative_id": "manual-retail",
+      "criterion_id": "delivery-clarity",
+      "own_value": "غير معروف",
+      "alternative_value": "غير معروف",
+      "status": "unknown",
+      "own_evidence_refs": [],
+      "alternative_evidence_refs": []
+    }
+  ],
+  "positioning": {
+    "statement": "صناديق تغليف بدفعات صغيرة للمشاريع المنزلية التي تحتاج موعد وصول واضح قبل تأكيد طلباتها",
+    "target_segment": "مشروع منزلي يطلب أقل من 100 صندوق في المرة",
+    "frame_of_reference": "توريد تغليف بدفعات صغيرة",
+    "reason_to_choose": "حد أدنى منخفض وموعد وصول ظاهر قبل الدفع",
+    "proof_refs": ["https://store.example/shipping-policy", "https://store.example/boxes#minimum"],
+    "counterevidence": "المشروع الذي يستهلك 500 صندوق شهريًا قد يحصل على سعر أفضل من مورد الجملة",
+    "unproven_assumptions": ["وضوح الموعد سيؤثر في الاختيار أكثر من فرق السعر"]
+  },
+  "next_test": {
+    "hypothesis": "وعد الدفعات الصغيرة ووضوح موعد الوصول يزيد بدء الطلب المؤهل",
+    "material": "نسختان من صفحة عرض واحدة تختلفان في وعد التموضع فقط",
+    "metric": "نسبة بدء الطلب المؤهل بعد مشاهدة الوعد",
+    "decision_rule": "استمر إذا بدأ 5 من كل 100 زائر مؤهل الطلب دون زيادة استفسارات موعد الوصول",
+    "owner": "مسؤول النمو",
+    "due_date": "2026-08-15"
+  }
+}

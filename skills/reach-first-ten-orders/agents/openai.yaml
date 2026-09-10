@@ -1,0 +1,4 @@
+interface:
+  display_name: "طلّع أول 10 طلبات لمتجرك"
+  short_description: "يكشف عائق البيع ويعطي التاجر خطوته التالية"
+  default_prompt: "استخدم $reach-first-ten-orders لتشخيص متجري واختيار خطوة واحدة تقرّبني من أول 10 طلبات صحيحة."

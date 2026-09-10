@@ -1,0 +1,4 @@
+interface:
+  display_name: "اكتشف الشحنة المتأخرة قبل ما يشتكي العميل"
+  short_description: "اكتشاف خطر تأخر الشحن من الوعد وحركة التتبع."
+  default_prompt: "استخدم $detect-shipping-delay لاكتشاف الشحنات المهددة وتحديد التصعيد المناسب."

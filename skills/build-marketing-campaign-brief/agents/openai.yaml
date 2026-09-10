@@ -1,0 +1,4 @@
+interface:
+  display_name: "جهّز خطة حملة تسويقية كاملة"
+  short_description: "بناء موجز حملة قابل للتنفيذ والقياس من حقائق المتجر."
+  default_prompt: "استخدم $build-marketing-campaign-brief لبناء موجز حملة بقنوات وعرض وقياس واضح."

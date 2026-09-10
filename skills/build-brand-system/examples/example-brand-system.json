@@ -1,0 +1,51 @@
+{
+  "schema_version": 2,
+  "market": "السعودية",
+  "language": "ar",
+  "direction": "rtl",
+  "status": "review_ready",
+  "source_register": [
+    {"id":"src-positioning","type":"internal_artifact","url_or_path":"outputs/positioning/map.json#positioning","observed_at":"2026-08-01","scope":"التموضع المعتمد"},
+    {"id":"src-catalog","type":"internal_artifact","url_or_path":"store/catalog/claims.json#ingredients","observed_at":"2026-08-01","scope":"حقول المكونات والمصدر"},
+    {"id":"src-brand-assets","type":"merchant_asset","url_or_path":"store/brand/assets.json#core","observed_at":"2026-08-01","scope":"ألوان وخطوط المتجر الحالية"}
+  ],
+  "brand_owner": {"name":"علامة المتجر","relationship":"merchant_owned","authorization_ref":"src-brand-assets"},
+  "positioning": {"segment":"عملاء يريدون قراءة مكونات منتجات العناية ومصدرها قبل الطلب","category":"متجر عناية مباشر","alternative":"الشراء من سوق عام","source_refs":["src-positioning"]},
+  "approved_claims": [
+    {"id":"claim-1","text":"كل منتج منشور يعرض المكونات ومصدرها","evidence_refs":["src-catalog"]}
+  ],
+  "brand_promise": {"text":"اعرف ما تشتريه قبل أن تطلبه","claim_refs":["claim-1"]},
+  "message_hierarchy": [
+    {"id":"msg-1","role":"primary","text":"اعرف ما تشتريه قبل أن تطلبه","claim_refs":["claim-1"]},
+    {"id":"msg-2","role":"supporting","text":"اقرأ المكونات والمصدر في صفحة كل منتج","claim_refs":["claim-1"]},
+    {"id":"msg-3","role":"proof","text":"الحقول موثقة في سجل المنتج","claim_refs":["claim-1"]},
+    {"id":"msg-4","role":"cta","text":"استعرض المنتجات","claim_refs":[]}
+  ],
+  "voice_traits": [
+    {"trait":"مباشرة","do":"ابدأ بالمعلومة المطلوبة","dont":"لا تستخدم مقدمات مبالغًا فيها","approved_example":"المكونات ومصدرها موضحان هنا","avoid_example":"اكتشف تجربة لا مثيل لها"},
+    {"trait":"موثقة","do":"اربط الادعاء بدليله","dont":"لا تستخدم نتيجة صحية غير مثبتة","approved_example":"المكوّن مسجل في بطاقة المنتج","avoid_example":"يعالج المشكلة نهائيًا"},
+    {"trait":"مطمئنة","do":"وضح ما يعرفه المتجر وما لا يعرفه","dont":"لا تصنع يقينًا زائفًا","approved_example":"تحقق من القائمة قبل الطلب","avoid_example":"مضمون 100%"}
+  ],
+  "visual_system": {
+    "mode":"existing",
+    "identity_owner":"علامة المتجر",
+    "decision_basis_refs":["src-brand-assets"],
+    "colors":[
+      {"role":"text-primary","value":"#243B53","source_ref":"src-brand-assets"},
+      {"role":"surface-primary","value":"#FFFFFF","source_ref":"src-brand-assets"},
+      {"role":"accent","value":"#D64545","source_ref":"src-brand-assets"}
+    ],
+    "contrast_checks":[
+      {"foreground":"#243B53","background":"#FFFFFF","context":"normal_text"}
+    ],
+    "typography":{"heading":"IBM Plex Sans Arabic","body":"IBM Plex Sans Arabic","source_ref":"src-brand-assets"},
+    "imagery_rules":["اعرض المنتج الحقيقي دون تغيير اللون أو الملصق","استخدم خلفية هادئة ولا تضف مكونات غير موجودة"],
+    "component_principles":["زر أساسي واحد في الكتلة","لا يعتمد التنبيه على اللون وحده"]
+  },
+  "applications":[
+    {"surface":"home","copy":"اعرف ما تشتريه قبل أن تطلبه","claim_refs":["claim-1"],"voice_traits":["مباشرة","موثقة"]},
+    {"surface":"product","copy":"المكونات ومصدرها موضحان في بطاقة المنتج","claim_refs":["claim-1"],"voice_traits":["مباشرة","موثقة"]},
+    {"surface":"customer_service","copy":"سأوضح لك المكوّن ومصدره كما هو مسجل","claim_refs":["claim-1"],"voice_traits":["مطمئنة","موثقة"]}
+  ],
+  "unknowns": []
+}

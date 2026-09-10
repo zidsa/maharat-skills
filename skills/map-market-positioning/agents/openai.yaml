@@ -1,0 +1,4 @@
+interface:
+  display_name: "اعرف وش يميّز متجرك عن المنافسين"
+  short_description: "قارن البدائل وابنِ تموضعًا قابلًا للإثبات"
+  default_prompt: "استخدم $map-market-positioning لمقارنة بدائل السوق وصياغة تموضع موثّق للمتجر."

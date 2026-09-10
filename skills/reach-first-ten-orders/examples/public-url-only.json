@@ -1,0 +1,21 @@
+{
+  "source": "public_url",
+  "observed_at": "2026-08-03T09:00:00+03:00",
+  "store": {
+    "published": true,
+    "products_count": 3,
+    "payment_enabled": null,
+    "shipping_enabled": null,
+    "checkout_test": "not_assessed"
+  },
+  "hero_product": {
+    "name": "منتج ظاهر",
+    "published": true,
+    "price": 99,
+    "stock": null
+  },
+  "funnel": null,
+  "merchant_assets": [],
+  "tracking_ready": false,
+  "orders": []
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "افحص صفحة الحملة"
+  short_description: "راجع وضوح العرض والطلب والجوال قبل الإعلان"
+  default_prompt: "استخدم $audit-campaign-landing-page لفحص صفحة حملة قبل الإنفاق."

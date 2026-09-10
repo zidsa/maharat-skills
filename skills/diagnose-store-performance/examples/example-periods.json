@@ -1,0 +1,4 @@
+{
+  "previous":{"days":30,"sessions":2000,"orders":80,"gross_item_revenue":18400,"gross_revenue_basis":"item_revenue_before_discounts_excluding_tax","discounts":800,"matured_refunds":300,"shipping_revenue":400,"tax_collected":0,"variable_costs":11200,"currency":"SAR","cohort_end":"2026-06-30","measurement_end":"2026-07-30","refund_maturity_days":30,"source":"orders-export-v1"},
+  "current":{"days":30,"sessions":2100,"orders":80,"gross_item_revenue":20600,"gross_revenue_basis":"item_revenue_before_discounts_excluding_tax","discounts":1300,"matured_refunds":700,"shipping_revenue":380,"tax_collected":0,"variable_costs":12600,"currency":"SAR","cohort_end":"2026-07-02","measurement_end":"2026-08-01","refund_maturity_days":30,"source":"orders-export-v1"}
+}

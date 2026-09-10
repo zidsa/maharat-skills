@@ -1,0 +1,37 @@
+{
+  "schema_version":1,
+  "status":"verified",
+  "build":{"url":"https://store.example","version":"release-42","environment":"staging","tested_at":"2026-08-25T10:30:00Z","configuration_changed_at":"2026-08-24T08:00:00Z"},
+  "privacy":{"contains_personal_data":false,"identifier_policy":"معرف طلب صناعي؛ لا بريد ولا جوال ولا معرف عميل خام"},
+  "source_register":[
+    {"id":"src-ga","type":"official_documentation","reference":"https://developers.google.com/analytics/devguides/collection/ga4/ecommerce","observed_at":"2026-08-25","scope":"عقود أحداث التجارة"},
+    {"id":"src-orders","type":"order_system","reference":"artifacts/define-launch-measurement/evidence/order.json#test-42","observed_at":"2026-08-25T10:15:00Z","scope":"مصدر حقيقة الطلب"},
+    {"id":"src-events","type":"analytics_export","reference":"artifacts/define-launch-measurement/evidence/events.json#run-42","observed_at":"2026-08-25T10:16:00Z","scope":"الأحداث والمعلمات"}
+  ],
+  "event_contracts":[
+    {"name":"view_item","trigger":"عرض صفحة منتج مكتملة","required_parameters":["items","item_id"],"source_of_truth_ref":"src-events","identifier_policy":"item_id من سجل المنتج","status":"validated"},
+    {"name":"add_to_cart","trigger":"نجاح إضافة متغير وكمية للسلة","required_parameters":["currency","value","items","item_id","quantity"],"source_of_truth_ref":"src-events","identifier_policy":"item_id من سجل المنتج","status":"validated"},
+    {"name":"begin_checkout","trigger":"فتح الدفع لسلة غير فارغة","required_parameters":["currency","value","items"],"source_of_truth_ref":"src-events","identifier_policy":"معرف جلسة غير شخصي","status":"validated"},
+    {"name":"purchase","trigger":"تأكيد طلب الاختبار المكتمل مرة واحدة","required_parameters":["transaction_id","currency","value","items"],"source_of_truth_ref":"src-orders","identifier_policy":"transaction_id يساوي معرف طلب صناعي","status":"validated"}
+  ],
+  "metrics":[
+    {"id":"product_view_rate","numerator":"جلسات عرض منتج","denominator":"الجلسات المؤهلة","source_ref":"src-events","owner":"مالك التحليلات","cadence":"يومي","decision_threshold":"إذا انخفض عن 40% افحص الاستهداف وصفحة الوصول"},
+    {"id":"add_to_cart_rate","numerator":"جلسات add_to_cart","denominator":"جلسات view_item","source_ref":"src-events","owner":"مالك التحويل","cadence":"يومي","decision_threshold":"إذا انخفض عن 8% افحص العرض وصفحة المنتج"},
+    {"id":"checkout_rate","numerator":"جلسات begin_checkout","denominator":"جلسات add_to_cart","source_ref":"src-events","owner":"مالك التحويل","cadence":"يومي","decision_threshold":"إذا انخفض عن 35% افحص السلة والشحن"},
+    {"id":"purchase_rate","numerator":"طلبات purchase الفريدة","denominator":"جلسات begin_checkout","source_ref":"src-events","owner":"مالك الدفع","cadence":"يومي","decision_threshold":"إذا انخفض عن 30% افحص الدفع والشحن"},
+    {"id":"revenue","numerator":"مجموع purchase.value","denominator":"none","source_ref":"src-orders","owner":"مالك المالية","cadence":"يومي","decision_threshold":"طابق الفارق مع سجل الطلبات قبل قرار الحملة"}
+  ],
+  "evidence_register":[
+    {"id":"ev-events","type":"event_log","reference":"artifacts/define-launch-measurement/evidence/events.json#run-42","observed_at":"2026-08-25T10:16:00Z","build_version":"release-42","transaction_id":"TEST-42","currency":"SAR","value":115,"item_ids":["sku-test"],"scope":"أحداث المسار"},
+    {"id":"ev-order","type":"order_record","reference":"artifacts/define-launch-measurement/evidence/order.json#test-42","observed_at":"2026-08-25T10:15:00Z","build_version":"release-42","transaction_id":"TEST-42","currency":"SAR","value":115,"item_ids":["sku-test"],"scope":"الطلب والقيمة"}
+  ],
+  "validation_cases":[
+    {"id":"case-view","event":"view_item","expected":"حدث واحد بمعرف المنتج","actual":"حدث واحد","expected_count":1,"actual_count":1,"required_parameters_present":true,"status":"passed","evidence_refs":["ev-events"]},
+    {"id":"case-cart","event":"add_to_cart","expected":"عنصر وكمية وقيمة","actual":"مطابق","expected_count":1,"actual_count":1,"required_parameters_present":true,"status":"passed","evidence_refs":["ev-events"]},
+    {"id":"case-checkout","event":"begin_checkout","expected":"قيمة السلة 115 SAR","actual":"115 SAR","expected_count":1,"actual_count":1,"required_parameters_present":true,"status":"passed","evidence_refs":["ev-events"]},
+    {"id":"case-purchase","event":"purchase","expected":"حدث شراء واحد","actual":"حدث واحد","expected_count":1,"actual_count":1,"required_parameters_present":true,"order_match":true,"status":"passed","evidence_refs":["ev-events","ev-order"]}
+  ],
+  "purchase_reconciliation":{"transaction_id":"TEST-42","event_transaction_id":"TEST-42","currency":"SAR","expected_value":115,"actual_value":115,"value_basis":"العناصر بعد الخصم وتشمل الشحن ولا تشمل الضريبة","tolerance":0.01,"items_match":true,"order_source_ref":"src-orders","order_evidence_ref":"ev-order","event_evidence_ref":"ev-events"},
+  "defects":[],
+  "blockers":[]
+}

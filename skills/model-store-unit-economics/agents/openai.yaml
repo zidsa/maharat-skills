@@ -1,0 +1,4 @@
+interface:
+  display_name: "اعرف ربحك من كل طلب"
+  short_description: "يحسب ربحية الطلب وحدود الاستحواذ قبل الإنفاق"
+  default_prompt: "استخدم $model-store-unit-economics لحساب اقتصاديات متجري ونقطة التعادل وحد تكلفة الاستحواذ من بياناتي."

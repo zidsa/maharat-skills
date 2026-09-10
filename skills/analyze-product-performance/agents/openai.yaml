@@ -1,0 +1,4 @@
+interface:
+  display_name: "اعرف منتجاتك الرابحة"
+  short_description: "حلّل المنتجات وحدد الإجراء التالي لكل منتج"
+  default_prompt: "استخدم $analyze-product-performance لتحليل أداء المنتجات بأدلة وفترة واضحة."

@@ -1,0 +1,19 @@
+{
+  "currency": "SAR",
+  "period": "30 days",
+  "tax_included_in_gross_revenue": true,
+  "orders": 80,
+  "attributed_paid_orders": 80,
+  "gross_item_revenue": 18400,
+  "discounts": 1600,
+  "refunds": 500,
+  "shipping_revenue": 600,
+  "taxes_collected": 2204,
+  "cogs": 7200,
+  "packaging": 400,
+  "payment_fees": 510,
+  "shipping_cost": 1760,
+  "fulfillment_cost": 320,
+  "other_variable_costs": 160,
+  "attributed_marketing_spend": 3200
+}

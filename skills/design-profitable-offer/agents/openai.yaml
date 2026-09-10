@@ -1,0 +1,4 @@
+interface:
+  display_name: "صمّم عرضًا يحمي الربح"
+  short_description: "قارن عروضًا محسوبة واختر الأنسب"
+  default_prompt: "استخدم $design-profitable-offer لتصميم عرض لا يتجاوز حد الربح."

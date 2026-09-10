@@ -1,0 +1,43 @@
+{
+  "schema_version": 2,
+  "market": "السعودية",
+  "currency": "SAR",
+  "status": "ready_for_storefront",
+  "source_register": [
+    {"id":"src-spec","type":"manufacturer_document","url_or_path":"https://merchant.example/specs/cotton-shirt.pdf","observed_at":"2026-08-01","scope":"الخامة"},
+    {"id":"src-platform","type":"platform_record","url_or_path":"store/products/shirt-01#variants","observed_at":"2026-08-01","scope":"SKU والأسعار والمخزون"},
+    {"id":"src-media","type":"merchant_asset","url_or_path":"store/assets/shirt-01#approved","observed_at":"2026-08-01","scope":"صور المنتج"},
+    {"id":"src-shipping","type":"policy","url_or_path":"store/policies/shipping#sa","observed_at":"2026-08-01","scope":"الشحن داخل السعودية"},
+    {"id":"src-return","type":"policy","url_or_path":"store/policies/returns#apparel","observed_at":"2026-08-01","scope":"استرجاع الملابس"}
+  ],
+  "product": {
+    "id":"shirt-01",
+    "name":"قميص قطني",
+    "brand":"علامة المتجر",
+    "category":"قمصان",
+    "claims":[{"id":"claim-material","fact_key":"material.composition","text":"الخامة قطن 100%","evidence_class":"product_fact","source_refs":["src-spec"]}],
+    "shipping_policy_ref":"src-shipping",
+    "return_policy_ref":"src-return"
+  },
+  "options":[
+    {"id":"color","name":"اللون","values":["أسود","أبيض"]},
+    {"id":"size","name":"المقاس","values":["S","M"]}
+  ],
+  "source_manifest":[
+    {"source_key":"src-row-black-s","option_values":{"color":"أسود","size":"S"},"source_refs":["src-platform"]},
+    {"source_key":"src-row-black-m","option_values":{"color":"أسود","size":"M"},"source_refs":["src-platform"]},
+    {"source_key":"src-row-white-s","option_values":{"color":"أبيض","size":"S"},"source_refs":["src-platform"]}
+  ],
+  "images":[
+    {"id":"img-black","url":"https://merchant.example/images/shirt-black.jpg","alt_text":"قميص قطني أسود من الأمام","source_ref":"src-media","sort_order":1},
+    {"id":"img-white","url":"https://merchant.example/images/shirt-white.jpg","alt_text":"قميص قطني أبيض من الأمام","source_ref":"src-media","sort_order":2}
+  ],
+  "variants":[
+    {"id":"black-s","source_key":"src-row-black-s","sku":"TS-BLK-S","option_values":{"color":"أسود","size":"S"},"price":89,"compare_at_price":null,"currency":"SAR","inventory":{"tracked":true,"quantity":4,"status":"in_stock"},"image_ids":["img-black"],"source_refs":["src-platform"]},
+    {"id":"black-m","source_key":"src-row-black-m","sku":"TS-BLK-M","option_values":{"color":"أسود","size":"M"},"price":89,"compare_at_price":109,"currency":"SAR","inventory":{"tracked":true,"quantity":0,"status":"out_of_stock"},"image_ids":["img-black"],"source_refs":["src-platform"]},
+    {"id":"white-s","source_key":"src-row-white-s","sku":"TS-WHT-S","option_values":{"color":"أبيض","size":"S"},"price":89,"compare_at_price":null,"currency":"SAR","inventory":{"tracked":false,"quantity":null,"status":"not_tracked"},"image_ids":["img-white"],"source_refs":["src-platform"]}
+  ],
+  "conflicts": [],
+  "blockers": [],
+  "missing_fields": []
+}
