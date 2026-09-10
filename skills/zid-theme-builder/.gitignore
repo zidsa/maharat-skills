@@ -1,0 +1,17 @@
+# Local, never-committed secrets (MCP connector URL with store token)
+references/.local/
+*.env
+.env
+
+# Image pipeline working files (harvest originals, SVG sources, handover)
+art/
+handover/
+
+# Python bytecode (scripts/)
+__pycache__/
+*.pyc
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
