@@ -1,0 +1,42 @@
+#!/usr/bin/env node
+import fs from "node:fs";import os from "node:os";import path from "node:path";import{spawnSync}from"node:child_process";import{fileURLToPath}from"node:url";
+const base=JSON.parse(fs.readFileSync(new URL("../examples/example-product-record.json",import.meta.url),"utf8"));const clone=()=>structuredClone(base);
+const validatorPath=fileURLToPath(new URL("./validate-product-record.mjs",import.meta.url));
+const cases=[
+ ["valid",true,x=>x],
+ ["duplicate sku",false,x=>{x.variants[1].sku=x.variants[0].sku.toLowerCase();return x}],
+ ["duplicate variant id",false,x=>{x.variants[1].id=x.variants[0].id;return x}],
+ ["missing option",false,x=>{delete x.variants[0].option_values.size;return x}],
+ ["unknown option",false,x=>{x.variants[0].option_values.fabric="cotton";return x}],
+ ["unknown option value",false,x=>{x.variants[0].option_values.color="أزرق";return x}],
+ ["duplicate combination",false,x=>{x.variants[1].option_values=structuredClone(x.variants[0].option_values);return x}],
+ ["zero in stock",false,x=>{x.variants[1].inventory.status="in_stock";return x}],
+ ["positive out of stock",false,x=>{x.variants[0].inventory.status="out_of_stock";return x}],
+ ["untracked quantity",false,x=>{x.variants[2].inventory.quantity=8;return x}],
+ ["untracked wrong status",false,x=>{x.variants[2].inventory.status="in_stock";return x}],
+ ["negative price",false,x=>{x.variants[0].price=-1;return x}],
+ ["bad compare price",false,x=>{x.variants[1].compare_at_price=80;return x}],
+ ["currency mismatch",false,x=>{x.variants[0].currency="USD";return x}],
+ ["unknown image",false,x=>{x.variants[0].image_ids=["missing"];return x}],
+ ["generic alt",false,x=>{x.images[0].alt_text="صورة";return x}],
+ ["http image",false,x=>{x.images[0].url="http://merchant.example/a.jpg";return x}],
+ ["claim without source",false,x=>{x.product.claims[0].source_refs=[];return x}],
+ ["claim without fact key",false,x=>{delete x.product.claims[0].fact_key;return x}],
+ ["duplicate fact key under another claim id",false,x=>{x.product.claims.push({...structuredClone(x.product.claims[0]),id:"claim-material-alias",text:"قطن خالص 100%"});return x}],
+ ["duplicate fact text under another key",false,x=>{x.product.claims.push({...structuredClone(x.product.claims[0]),id:"claim-material-alias",fact_key:"fabric.primary"});return x}],
+ ["missing policy",false,x=>{x.product.shipping_policy_ref="";return x}],
+ ["ready with missing field",false,x=>{x.missing_fields=["barcode"];return x}],
+ ["draft with missing field",true,x=>{x.status="draft";x.missing_fields=["barcode"];return x}],
+ ["unknown top-level field",false,x=>{x.raw_input_conflicts=["مخزون متناقض"];return x}],
+ ["ready with blocker",false,x=>{x.blockers=[{id:"block-1",reason:"بيانات ناقصة",missing_fields:["barcode"],conflict_refs:[]}];return x}],
+ ["draft captures omitted conflict",true,x=>{x.status="draft";const removed=x.variants.pop();x.conflicts=[{id:"conflict-1",type:"inventory_mismatch",description:"المخزون متناقض",affected_source_keys:[removed.source_key],source_refs:["src-platform"]}];x.blockers=[{id:"block-1",reason:"حل المخزون قبل الجاهزية",conflict_refs:["conflict-1"],missing_fields:[]}];return x}],
+ ["ready cannot hide conflict",false,x=>{const removed=x.variants.pop();x.conflicts=[{id:"conflict-1",type:"inventory_mismatch",description:"المخزون متناقض",affected_source_keys:[removed.source_key],source_refs:["src-platform"]}];x.blockers=[{id:"block-1",reason:"حل المخزون",conflict_refs:["conflict-1"],missing_fields:[]}];return x}],
+ ["silent source omission",false,x=>{x.status="draft";x.variants.pop();return x}],
+ ["source combination mismatch",false,x=>{x.variants[0].option_values={color:"أبيض",size:"M"};return x}],
+ ["missing source manifest",false,x=>{x.source_manifest=[];return x}],
+ ["draft may block unsafe image",true,x=>{x.status="draft";x.images=[];x.variants.forEach(v=>v.image_ids=[]);x.missing_fields=["images.https"];x.conflicts=[{id:"conflict-image",type:"missing_required_data",description:"رابط الصورة HTTP وغير آمن",affected_source_keys:[],affected_fields:["images.https"],source_refs:["src-media"]}];x.blockers=[{id:"block-image",reason:"توفير صورة HTTPS موثقة",conflict_refs:["conflict-image"],missing_fields:["images.https"]}];return x}],
+ ["decorative image field cannot bypass",false,x=>{x.status="draft";x.images=[];x.variants.forEach(v=>v.image_ids=[]);x.missing_fields=["images.decorative_label"];x.conflicts=[{id:"conflict-image",type:"missing_required_data",description:"لا توجد صورة",affected_source_keys:[],affected_fields:["images.alt_note"],source_refs:["src-media"]}];x.blockers=[{id:"block-image",reason:"صورة ناقصة",conflict_refs:["conflict-image"],missing_fields:["images.decorative_label"]}];return x}],
+ ["unlinked image blocker cannot bypass",false,x=>{x.status="draft";x.images=[];x.variants.forEach(v=>v.image_ids=[]);x.missing_fields=["images.https"];x.conflicts=[{id:"conflict-image",type:"missing_required_data",description:"لا توجد صورة",affected_source_keys:[],affected_fields:["images.https"],source_refs:["src-media"]}];x.blockers=[{id:"block-image",reason:"صورة ناقصة",conflict_refs:[],missing_fields:["images.https"]}];return x}],
+ ["draft missing image without blocker",false,x=>{x.status="draft";x.images=[];x.variants.forEach(v=>v.image_ids=[]);return x}],
+ ["bad source path",false,x=>{x.source_register[0].url_or_path="spec.pdf";return x}]
+];let failed=0;for(const[name,expected,mutate]of cases){const dir=fs.mkdtempSync(path.join(os.tmpdir(),"product-record-")),file=path.join(dir,"in.json");fs.writeFileSync(file,JSON.stringify(mutate(clone()),null,2));const r=spawnSync(process.execPath,[validatorPath,file],{encoding:"utf8"});const actual=r.status===0;fs.rmSync(dir,{recursive:true,force:true});if(actual!==expected){failed++;console.error(`FAIL ${name}\n${r.stdout}${r.stderr}`)}else console.log(`PASS ${name}`)}if(failed)process.exit(1);console.log(`PASS ${cases.length}/${cases.length}`);

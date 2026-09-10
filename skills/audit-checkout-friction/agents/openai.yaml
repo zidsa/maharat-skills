@@ -1,0 +1,4 @@
+interface:
+  display_name: "اكتشف تعطل إكمال الطلب"
+  short_description: "حدّد موضع توقف العميل قبل الطلب"
+  default_prompt: "استخدم $audit-checkout-friction لتشخيص نقطة توقف العميل في مسار الطلب."

@@ -13,10 +13,10 @@ npx skills add https://github.com/zidsa/maharat-skills --list
 ## Install one skill
 
 ```bash
-npx skills add https://github.com/zidsa/maharat-skills --skill merchant-lead-01
+npx skills add https://github.com/zidsa/maharat-skills --skill reach-first-ten-orders
 ```
 
-Replace `merchant-lead-01` with any directory name under `skills/`.
+Replace `reach-first-ten-orders` with any directory name under `skills/`.
 
 ## Package structure
 
@@ -53,7 +53,7 @@ When adding or updating a skill:
 2. Review `SKILL.md` and every companion file.
 3. Run the package's validators and tests.
 4. Confirm that paths, examples, and install instructions work from a clean checkout.
-5. Update the website repository only after the source package is ready.
+5. Merge the source package to public `main` before updating the website repository. Its deployment gate anonymously checks every published package, install name, mirrored companion file, and content snapshot against this repository.
 
 Do not submit `SKILL.md` alone when the skill depends on references, examples, assets, agents, or scripts.
 

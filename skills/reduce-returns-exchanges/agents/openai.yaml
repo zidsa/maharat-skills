@@ -1,0 +1,4 @@
+interface:
+  display_name: "قلّل أسباب المرتجعات"
+  short_description: "صنّف أسباب المرتجعات واختر إصلاحًا قابلًا للقياس"
+  default_prompt: "استخدم $reduce-returns-exchanges لتحليل المرتجعات واختيار إصلاح واحد."

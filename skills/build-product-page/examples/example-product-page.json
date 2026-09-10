@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "status": "review_ready",
+  "source_register": [
+    {"id":"product-record","type":"internal_artifact","url_or_path":"outputs/product-record/product.json#record","observed_at":"2026-08-02","scope":"سجل المنتج المعتمد"},
+    {"id":"brand-system","type":"internal_artifact","url_or_path":"outputs/brand-system/brand.json#system","observed_at":"2026-08-02","scope":"نظام العلامة المعتمد"}
+  ],
+  "product_record": {"status":"ready_for_storefront","artifact_ref":"product-record","product_id":"shirt-01","claims":[{"id":"claim-material","fact_key":"material.composition","text":"الخامة قطن 100%","evidence_class":"product_fact","approved_copy":["الخامة قطن 100%","قطن 100% حسب ملف المواصفات"]}],"option_ids":["color","size"],"image_ids":["img-black","img-white"],"policy_refs":["src-shipping","src-return"]},
+  "brand_system": {"status":"review_ready","artifact_ref":"brand-system","voice_traits":["مباشرة","موثقة"]},
+  "above_fold": {"name":"قميص قطني","value_line":"الخامة قطن 100%","claim_refs":["claim-material"],"price_binding":"selected_variant.price","availability_binding":"selected_variant.inventory.status","option_controls":["color","size"],"primary_cta":"أضف للسلة"},
+  "content_blocks": [
+    {"id":"benefit-material","type":"benefit","heading":"الخامة","body":"قطن 100% حسب ملف المواصفات","statements":[{"text":"قطن 100% حسب ملف المواصفات","claim_ref":"claim-material"}]},
+    {"id":"specifications","type":"specifications","heading":"المواصفات","body":"بيانات اللون والمقاس من المتغير المختار","bindings":["selected_variant.option_values"]},
+    {"id":"policies","type":"policies","heading":"الشحن والاسترجاع","body":"سياسات الشحن والاسترجاع المعتمدة","policy_refs":["src-shipping","src-return"],"bindings":["shipping_policy","return_policy"]}
+  ],
+  "media_plan": [
+    {"image_id":"img-black","role":"primary_product","source_ref":"product-record","alt_text":"قميص قطني أسود من الأمام","shows_verified_product":true},
+    {"image_id":"img-white","role":"variant_product","source_ref":"product-record","alt_text":"قميص قطني أبيض من الأمام","shows_verified_product":true}
+  ],
+  "faq": [],
+  "faq_status":"no_verified_questions",
+  "trust_metrics": [],
+  "seo": {"title":"قميص قطني | اسم المتجر","description":"الخامة قطن 100%","statements":[{"text":"الخامة قطن 100%","claim_ref":"claim-material"}]},
+  "blockers": []
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "اختر أهم 3 مهام تسويها اليوم"
+  short_description: "تلخيص آثار التشغيل إلى ثلاث أولويات موثقة لليوم."
+  default_prompt: "استخدم $build-daily-operations-brief لبناء موجز يومي من نتائج الطلبات والشحن والدعم والمخزون."

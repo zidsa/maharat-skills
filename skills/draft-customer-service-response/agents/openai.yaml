@@ -1,0 +1,4 @@
+interface:
+  display_name: "اكتب رد للعميل حسب حالة طلبه"
+  short_description: "صياغة رد عميل من حقيقة الطلب والسياسة المعتمدة."
+  default_prompt: "استخدم $draft-customer-service-response لصياغة رد دقيق قابل للمراجعة دون إرساله."

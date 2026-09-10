@@ -1,0 +1,4 @@
+interface:
+  display_name: "اعرف أي طلب يحتاج تدخلك"
+  short_description: "فرز الطلبات المفتوحة إلى إجراءات موثقة وآمنة."
+  default_prompt: "استخدم $triage-open-orders لفرز الطلبات المفتوحة وتحديد الإجراء والمالك والموعد."

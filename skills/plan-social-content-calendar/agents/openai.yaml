@@ -1,0 +1,4 @@
+interface:
+  display_name: "جهّز جدول محتوى يناسب فريقك"
+  short_description: "تحويل الحملة والقدرة الإنتاجية إلى تقويم محتوى واقعي."
+  default_prompt: "استخدم $plan-social-content-calendar لبناء تقويم محتوى مرتبط بهدف ومالك وموعد."

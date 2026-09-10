@@ -1,0 +1,4 @@
+interface:
+  display_name: "حوّل منتجاتك إلى محتوى"
+  short_description: "أنشئ قطع محتوى جاهزة لكل قناة من حقائق المنتج"
+  default_prompt: "استخدم $create-store-content-kit لإنشاء محتوى قنوات من حقائق متجر موثقة."

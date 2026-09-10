@@ -1,0 +1,10 @@
+{
+  "الشراء": {
+    "build_version": "release-42",
+    "transaction_id": "TEST-42",
+    "currency": "SAR",
+    "value": 115,
+    "item_ids": ["sku-test"],
+    "events": ["view_item", "add_to_cart", "begin_checkout", "purchase"]
+  }
+}

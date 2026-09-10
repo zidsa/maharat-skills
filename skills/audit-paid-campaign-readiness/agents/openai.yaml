@@ -1,0 +1,4 @@
+interface:
+  display_name: "تأكد إن حملتك جاهزة قبل تدفع للإعلان"
+  short_description: "فحص العرض والأصل والهبوط والقياس قبل الإنفاق."
+  default_prompt: "استخدم $audit-paid-campaign-readiness لفحص جاهزية حملة مدفوعة قبل تفعيلها."

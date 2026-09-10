@@ -1,0 +1,9 @@
+{
+  "now":"2026-08-02T12:00:00+03:00",
+  "orders":[
+    {"id":"A-1","payment_status":"paid","order_status":"ready","inventory_reserved":true,"promised_at":"2026-08-03T18:00:00+03:00","promised_at_source":"checkout"},
+    {"id":"A-2","payment_status":"pending","order_status":"new","inventory_reserved":false},
+    {"id":"A-3","payment_status":"paid","order_status":"new","inventory_reserved":false},
+    {"id":"A-4","payment_status":"paid","order_status":"in_delivery","inventory_reserved":true,"promised_at":"2026-08-01T18:00:00+03:00","promised_at_source":"checkout"}
+  ]
+}

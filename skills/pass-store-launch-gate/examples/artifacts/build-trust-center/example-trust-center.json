@@ -1,0 +1,30 @@
+{
+  "schema_version":1,
+  "status":"review_ready",
+  "audit_date":"2026-08-02",
+  "source_register":[
+    {"id":"compliance","type":"internal_artifact","url_or_path":"outputs/compliance/audit.json#approved","observed_at":"2026-08-02","scope":"نصوص مسموح استخدامها"},
+    {"id":"brand","type":"internal_artifact","url_or_path":"outputs/brand/system.json#review","observed_at":"2026-08-02","scope":"نظام العلامة"},
+    {"id":"entity","type":"merchant_settings","url_or_path":"merchant/store/settings.json#identity","observed_at":"2026-08-02","scope":"هوية المتجر"},
+    {"id":"returns","type":"merchant_policy","url_or_path":"merchant/policies/returns.md#approved","observed_at":"2026-08-02","scope":"سياسة الاسترجاع"},
+    {"id":"delivery","type":"merchant_policy","url_or_path":"merchant/policies/delivery.md#approved","observed_at":"2026-08-02","scope":"سياسة التسليم"},
+    {"id":"contact","type":"contact_settings","url_or_path":"merchant/store/settings.json#contact","observed_at":"2026-08-02","scope":"قناة التواصل"}
+  ],
+  "compliance_artifact":{"artifact_ref":"compliance","review_status":"approved_for_copy"},
+  "brand_system":{"artifact_ref":"brand","status":"review_ready"},
+  "verified_facts":[
+    {"id":"identity","type":"identity","active":true,"critical":true,"source_ref":"entity","observed_at":"2026-08-02","approved_copy":["متجر موج للملابس"]},
+    {"id":"returns-policy","type":"return_refund","active":true,"critical":true,"source_ref":"returns","observed_at":"2026-08-02","approved_copy":["اطّلع على شروط الاسترجاع والاسترداد"]},
+    {"id":"delivery-policy","type":"delivery","active":true,"critical":true,"source_ref":"delivery","observed_at":"2026-08-02","approved_copy":["اطّلع على خيارات ومواعيد التسليم"]},
+    {"id":"contact-channel","type":"contact","active":true,"critical":true,"source_ref":"contact","observed_at":"2026-08-02","approved_copy":["تواصل معنا عبر القناة الرسمية"]}
+  ],
+  "placements":[
+    {"id":"trust-identity","surface":"trust_center","component":"identity","heading":"عن المتجر","statements":[{"text":"متجر موج للملابس","fact_ref":"identity"}],"detail_link":"https://store.example/about"},
+    {"id":"trust-returns","surface":"trust_center","component":"policy_summary","heading":"الاسترجاع","statements":[{"text":"اطّلع على شروط الاسترجاع والاسترداد","fact_ref":"returns-policy"}],"detail_link":"https://store.example/returns"},
+    {"id":"trust-delivery","surface":"trust_center","component":"policy_summary","heading":"التسليم","statements":[{"text":"اطّلع على خيارات ومواعيد التسليم","fact_ref":"delivery-policy"}],"detail_link":"https://store.example/delivery"},
+    {"id":"trust-contact","surface":"trust_center","component":"contact_card","heading":"التواصل","statements":[{"text":"تواصل معنا عبر القناة الرسمية","fact_ref":"contact-channel"}],"detail_link":"https://store.example/contact"},
+    {"id":"product-returns","surface":"product","component":"policy_summary","heading":"الاسترجاع والتسليم","statements":[{"text":"اطّلع على شروط الاسترجاع والاسترداد","fact_ref":"returns-policy"},{"text":"اطّلع على خيارات ومواعيد التسليم","fact_ref":"delivery-policy"}],"detail_link":"https://store.example/returns"}
+  ],
+  "assets":[],
+  "blockers":[]
+}

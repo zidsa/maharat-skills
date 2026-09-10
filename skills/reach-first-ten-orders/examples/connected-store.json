@@ -1,0 +1,25 @@
+{
+  "source": "mcp",
+  "observed_at": "2026-08-03T09:00:00+03:00",
+  "store": {
+    "published": true,
+    "products_count": 4,
+    "payment_enabled": true,
+    "shipping_enabled": true,
+    "checkout_test": "passed"
+  },
+  "hero_product": {
+    "name": "كولكشن البحر",
+    "published": true,
+    "price": 149,
+    "stock": 18
+  },
+  "funnel": {
+    "product_views": 240,
+    "add_to_carts": 0,
+    "checkout_starts": 0
+  },
+  "merchant_assets": ["content"],
+  "tracking_ready": true,
+  "orders": []
+}

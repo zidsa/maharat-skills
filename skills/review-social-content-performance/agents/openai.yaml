@@ -1,0 +1,4 @@
+interface:
+  display_name: "راجع نتائج المحتوى"
+  short_description: "قارن أداء المحتوى واقترح الاختبار التالي"
+  default_prompt: "استخدم $review-social-content-performance لمعرفة المحتوى الذي يستحق التكرار."

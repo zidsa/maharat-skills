@@ -1,0 +1,4 @@
+interface:
+  display_name: "رجّع العميل للشراء"
+  short_description: "حدّد شرائح العودة ورسائلها وضوابطها"
+  default_prompt: "استخدم $plan-customer-winback لبناء خطة عودة عملاء بلا كشف بيانات شخصية."

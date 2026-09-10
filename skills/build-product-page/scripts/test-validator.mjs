@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+import fs from"node:fs";import os from"node:os";import path from"node:path";import{spawnSync}from"node:child_process";import{fileURLToPath}from"node:url";
+const base=JSON.parse(fs.readFileSync(new URL("../examples/example-product-page.json",import.meta.url),"utf8")),clone=()=>structuredClone(base),validator=fileURLToPath(new URL("./validate-product-page.mjs",import.meta.url));
+const cases=[
+ ["valid",true,x=>x],
+ ["draft product review",false,x=>{x.product_record.status="draft";return x}],
+ ["draft page allows draft product",true,x=>{x.status="draft";x.product_record.status="draft";x.blockers=["سجل المنتج"];return x}],
+ ["missing product ref",false,x=>{x.product_record.artifact_ref="missing";return x}],
+ ["bad price binding",false,x=>{x.above_fold.price_binding="89 SAR";return x}],
+ ["unknown option",false,x=>{x.above_fold.option_controls.push("fabric");return x}],
+ ["unknown claim",false,x=>{x.above_fold.claim_refs=["missing"];return x}],
+ ["unapproved value line",false,x=>{x.above_fold.value_line="خامة مريحة طوال اليوم";return x}],
+ ["absolute claim",false,x=>{x.above_fold.value_line="الأفضل بلا مثيل";return x}],
+ ["fake scarcity",false,x=>{x.above_fold.value_line="بقيت 2 فقط";return x}],
+ ["bestseller synonym",false,x=>{x.content_blocks[0].heading="الأكثر طلبًا لدى العملاء";return x}],
+ ["benefit no evidence",false,x=>{delete x.content_blocks[0].statements;return x}],
+ ["fabricated body behind real claim",false,x=>{x.content_blocks[0].body="يدوم عشر سنوات";return x}],
+ ["fabricated statement behind real claim",false,x=>{x.content_blocks[0].body="يدوم عشر سنوات";x.content_blocks[0].statements[0].text="يدوم عشر سنوات";return x}],
+ ["missing specs",false,x=>{x.content_blocks=x.content_blocks.filter(b=>b.type!=="specifications");return x}],
+ ["unknown binding",false,x=>{x.content_blocks[1].bindings=["merchant.secret"];return x}],
+ ["unknown policy",false,x=>{x.content_blocks[2].policy_refs=["missing"];return x}],
+ ["unknown image",false,x=>{x.media_plan[0].image_id="missing";return x}],
+ ["generic alt",false,x=>{x.media_plan[0].alt_text="صورة";return x}],
+ ["unverified image",false,x=>{x.media_plan[0].shows_verified_product=false;return x}],
+ ["faq state mismatch",false,x=>{x.faq_status="verified_questions_included";return x}],
+ ["faq with real question source",true,x=>{x.source_register.push({id:"questions",type:"merchant_question_log",url_or_path:"store/support/questions.json#shirt",observed_at:"2026-08-02",scope:"أسئلة عملاء فعلية"});x.faq_status="verified_questions_included";x.faq=[{question:"ما الخامة؟",question_source_ref:"questions",source_locator:"ticket-18",answer:"الخامة قطن 100%",claim_ref:"claim-material"}];return x}],
+ ["faq using claim as question source",false,x=>{x.faq_status="verified_questions_included";x.faq=[{question:"ما الخامة؟",question_source_ref:"product-record",source_locator:"claim-material",answer:"الخامة قطن 100%",claim_ref:"claim-material"}];return x}],
+ ["faq invented answer",false,x=>{x.source_register.push({id:"questions",type:"merchant_question_log",url_or_path:"store/support/questions.json#shirt",observed_at:"2026-08-02",scope:"أسئلة فعلية"});x.faq_status="verified_questions_included";x.faq=[{question:"هل يدوم؟",question_source_ref:"questions",source_locator:"ticket-19",answer:"يدوم عشر سنوات",claim_ref:"claim-material"}];return x}],
+ ["duplicate benefits",false,x=>{x.content_blocks.push({...structuredClone(x.content_blocks[0]),id:"benefit-copy"});return x}],
+ ["same claim as two benefits",false,x=>{x.content_blocks.push({id:"benefit-copy",type:"benefit",heading:"ميزة أخرى",body:"الخامة قطن 100%",statements:[{text:"الخامة قطن 100%",claim_ref:"claim-material"}]});return x}],
+ ["same fact under alternate claim ids",false,x=>{x.product_record.claims.push({...structuredClone(x.product_record.claims[0]),id:"claim-material-alias",text:"قطن خالص",approved_copy:["قطن خالص"]});x.content_blocks.push({id:"benefit-copy",type:"benefit",heading:"ميزة أخرى",body:"قطن خالص",statements:[{text:"قطن خالص",claim_ref:"claim-material-alias"}]});return x}],
+ ["same copy under alternate fact key",false,x=>{x.product_record.claims.push({...structuredClone(x.product_record.claims[0]),id:"claim-material-alias",fact_key:"fabric.primary"});return x}],
+ ["duplicate faq question",false,x=>{x.source_register.push({id:"questions",type:"merchant_question_log",url_or_path:"store/support/questions.json#shirt",observed_at:"2026-08-02",scope:"أسئلة فعلية"});x.faq_status="verified_questions_included";x.faq=[{question:"ما الخامة؟",question_source_ref:"questions",source_locator:"ticket-18",answer:"الخامة قطن 100%",claim_ref:"claim-material"},{question:"ما الخامة؟",question_source_ref:"questions",source_locator:"ticket-19",answer:"الخامة قطن 100%",claim_ref:"claim-material"}];return x}],
+ ["duplicate faq locator",false,x=>{x.source_register.push({id:"questions",type:"merchant_question_log",url_or_path:"store/support/questions.json#shirt",observed_at:"2026-08-02",scope:"أسئلة فعلية"});x.faq_status="verified_questions_included";x.faq=[{question:"ما الخامة؟",question_source_ref:"questions",source_locator:"ticket-18",answer:"الخامة قطن 100%",claim_ref:"claim-material"},{question:"هل الخامة قطن؟",question_source_ref:"questions",source_locator:"ticket-18",answer:"الخامة قطن 100%",claim_ref:"claim-material"}];return x}],
+ ["duplicate faq locator through source alias",false,x=>{x.source_register.push({id:"questions-a",type:"merchant_question_log",url_or_path:"store/support/questions.json#shirt",observed_at:"2026-08-02",scope:"أسئلة فعلية"},{id:"questions-b",type:"merchant_question_log",url_or_path:"store/support/questions.json#shirt",observed_at:"2026-08-02",scope:"نفس السجل باسم آخر"});x.faq_status="verified_questions_included";x.faq=[{question:"ما الخامة؟",question_source_ref:"questions-a",source_locator:"ticket-18",answer:"الخامة قطن 100%",claim_ref:"claim-material"},{question:"هل الخامة قطن؟",question_source_ref:"questions-b",source_locator:"ticket-18",answer:"الخامة قطن 100%",claim_ref:"claim-material"}];return x}],
+ ["fake rating",false,x=>{x.content_blocks.push({id:"trust",type:"trust",heading:"التقييم",body:"4.9/5 من 120 مراجعة",bindings:["product.name"]});return x}],
+ ["trust source required",false,x=>{x.trust_metrics=[{id:"rating",metric:"rating_average",value:4.9,source_ref:"product-record",observed_at:"2026-08-02"}];x.content_blocks.push({id:"trust",type:"trust",heading:"التقييم",body:"4.9/5",trust_metric_refs:["rating"]});return x}],
+ ["ready with blocker",false,x=>{x.blockers=["صورة ناقصة"];return x}],
+ ["bad source path",false,x=>{x.source_register[0].url_or_path="product.json";return x}]
+];
+let failed=0;for(const[name,expected,mutate]of cases){const d=fs.mkdtempSync(path.join(os.tmpdir(),"product-page-")),f=path.join(d,"in.json");fs.writeFileSync(f,JSON.stringify(mutate(clone()),null,2));const r=spawnSync(process.execPath,[validator,f],{encoding:"utf8"}),actual=r.status===0;fs.rmSync(d,{recursive:true,force:true});if(actual!==expected){failed++;console.error(`FAIL ${name}\n${r.stdout}${r.stderr}`)}else console.log(`PASS ${name}`)}if(failed)process.exit(1);console.log(`PASS ${cases.length}/${cases.length}`);

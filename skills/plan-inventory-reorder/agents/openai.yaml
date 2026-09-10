@@ -1,0 +1,4 @@
+interface:
+  display_name: "اعرف متى وكم تطلب من المخزون"
+  short_description: "حساب توقيت وكمية إعادة الطلب مع إظهار الافتراضات."
+  default_prompt: "استخدم $plan-inventory-reorder لبناء قرار إعادة طلب موثق لكل SKU."

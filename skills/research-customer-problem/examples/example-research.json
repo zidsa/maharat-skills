@@ -1,0 +1,54 @@
+{
+  "research_question": "كيف يقرر أصحاب المقاهي الصغيرة إعادة طلب العبوات عند اقتراب النفاد؟",
+  "decision_context": "تحديد هل يستحق توقيت إعادة الطلب جولة تحقق تجارية لاحقة",
+  "segment_definition": "مالك أو مدير مقهى طلب عبوات بنفسه خلال آخر 60 يومًا",
+  "recruitment_criteria": "يدير المخزون والطلب فعليًا ويذكر طلبًا حديثًا يمكن تتبعه",
+  "discussion_guide": [
+    "احكِ لي عن آخر مرة قاربت فيها العبوات على النفاد",
+    "ما الذي جعلك تلاحظ المشكلة وماذا فعلت بعدها؟",
+    "ما البديل الذي استخدمته وما الوقت أو التكلفة التي تحملتها؟",
+    "ما الذي حدث في النهاية وما الذي كان سيغير قرارك وقتها؟"
+  ],
+  "consent": {
+    "confirmed": true,
+    "use_scope": "تحليل داخلي مجهّل للمشكلة فقط",
+    "retention_and_deletion": "تحذف التسجيلات بعد اعتماد الملاحظات خلال 30 يومًا"
+  },
+  "sessions": [
+    {
+      "participant_id": "P-01",
+      "qualified": true,
+      "date": "2026-07-28",
+      "problem_episode": "نفدت الأكواب مساء الخميس قبل وصول التوريد",
+      "observed_behavior": "تواصل مع موردين واشترى كمية عاجلة بسعر أعلى",
+      "current_alternative": "متابعة يدوية ورسائل واتساب للموردين",
+      "impact": "توقف بيع بعض المشروبات ساعتين",
+      "source_ref": "notes/round-1/P-01#episode-2"
+    },
+    {
+      "participant_id": "P-02",
+      "qualified": true,
+      "date": "2026-07-30",
+      "problem_episode": "لاحظ انخفاض الأغطية بعد جرد نهاية اليوم",
+      "observed_behavior": "أرسل طلبًا في نفس الليلة لمورده المعتاد",
+      "current_alternative": "جرد يدوي عند الإغلاق",
+      "impact": "وقت إضافي وتأخر تأكيد الطلب للصباح",
+      "source_ref": "notes/round-1/P-02#episode-1"
+    }
+  ],
+  "excluded_sessions": [],
+  "claims": [
+    {
+      "id": "claim-reorder-trigger",
+      "statement": "قرار إعادة الطلب يبدأ غالبًا بعد ملاحظة نقص فعلي لا من حد مخزون محدد",
+      "decision_relevance": "يحدد هل توقيت إعادة الطلب مشكلة تستحق تحققًا تجاريًا لاحقًا",
+      "classification": "repeated_observation",
+      "supporting_participant_ids": ["P-01", "P-02"],
+      "contradicting_participant_ids": [],
+      "limitation": "الجولة صغيرة ومحصورة بمقاهٍ يدير مالكها المخزون بنفسه"
+    }
+  ],
+  "decision_claim_ids": [],
+  "open_questions": ["هل تختلف الممارسة عند وجود مدير مشتريات مستقل؟"],
+  "next_decision": "continue_round"
+}

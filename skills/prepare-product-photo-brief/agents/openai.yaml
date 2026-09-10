@@ -1,0 +1,4 @@
+interface:
+  display_name: "صوّر منتجك بوضوح"
+  short_description: "أنشئ قائمة لقطات وإعداد تصوير للمنتج"
+  default_prompt: "استخدم $prepare-product-photo-brief لتجهيز قائمة صور منتج قابلة للتنفيذ."

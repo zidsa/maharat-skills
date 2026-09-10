@@ -1,0 +1,29 @@
+{
+  "schema_version":1,
+  "status":"ready_for_specialist_review",
+  "audit_date":"2026-08-02",
+  "jurisdiction":{"country_code":"SA","seller_entity_ref":"merchant-entity","product_scope":["ملابس"],"sales_channels":["storefront"]},
+  "source_register":[
+    {"id":"mc-compliance","type":"official_guidance","authority":"وزارة التجارة","url_or_path":"https://mc.gov.sa/ar/ECC/pages/default.aspx","market":"SA","observed_at":"2026-08-02","scope":"متطلبات المتاجر الإلكترونية"},
+    {"id":"merchant-entity","type":"merchant_record","authority":"التاجر","url_or_path":"merchant/legal/entity.json#record","market":"SA","observed_at":"2026-08-02","scope":"هوية الكيان"}
+  ],
+  "requirements":[
+    {"id":"identity-disclosure","topic":"identity","applicability":"applicable","applicability_reason":"بيع مباشر للمستهلك","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"https://store.example/about","observed_at":"2026-08-02","finding":"بيانات الكيان ظاهرة"}]},
+    {"id":"contract-terms","topic":"contract","applicability":"applicable","applicability_reason":"إبرام عقد بيع إلكتروني","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"https://store.example/terms","observed_at":"2026-08-02","finding":"شروط التعاقد متاحة قبل الشراء"}]},
+    {"id":"pricing-disclosure","topic":"pricing","applicability":"applicable","applicability_reason":"عرض منتجات بأسعار للمستهلك","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"https://store.example/products/test","observed_at":"2026-08-02","finding":"السعر والتكلفة النهائية ظاهران"}]},
+    {"id":"payment-disclosure","topic":"payment","applicability":"applicable","applicability_reason":"تحصيل قيمة الطلب إلكترونيًا","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"artifacts/checkout/payment.json#methods","observed_at":"2026-08-02","finding":"وسائل الدفع الفعلية موثقة"}]},
+    {"id":"delivery-policy","topic":"delivery","applicability":"applicable","applicability_reason":"تسليم منتجات مادية","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"https://store.example/delivery","observed_at":"2026-08-02","finding":"خيارات التسليم ومدده موضحة"}]},
+    {"id":"returns-policy","topic":"return_refund","applicability":"applicable","applicability_reason":"بيع منتجات للمستهلك","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"https://store.example/returns","observed_at":"2026-08-02","finding":"شروط الاسترجاع والاسترداد منشورة"}]},
+    {"id":"privacy-policy","topic":"privacy","applicability":"applicable","applicability_reason":"معالجة بيانات الطلب","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"https://store.example/privacy","observed_at":"2026-08-02","finding":"سياسة الخصوصية منشورة"}]},
+    {"id":"complaints-policy","topic":"complaints","applicability":"applicable","applicability_reason":"قناة شكاوى مطلوبة للعميل","source_refs":["mc-compliance"],"evidence_status":"missing","evidence":[]}
+    ,{"id":"advertising-review","topic":"advertising","applicability":"applicable","applicability_reason":"استخدام وصف وعرض تسويقي","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"artifacts/launch/campaign.json#approved-copy","observed_at":"2026-08-02","finding":"الادعاءات والعرض مرتبطان بمصادرهما"}]}
+    ,{"id":"invoice-record","topic":"invoice","applicability":"applicable","applicability_reason":"إصدار مستند للطلب","source_refs":["mc-compliance"],"evidence_status":"verified","evidence":[{"reference":"artifacts/order-test/invoice.json#test-order","observed_at":"2026-08-02","finding":"مستند الطلب التجريبي محفوظ"}]}
+  ],
+  "gaps":[
+    {"id":"gap-complaints","requirement_ref":"complaints-policy","severity":"high","owner":"مدير تجربة العميل","action":"اعتماد قناة الشكوى ومدة الرد ثم نشر السياسة","due_at":"2026-08-05"}
+  ],
+  "policy_drafts":[
+    {"id":"complaints-draft","policy_type":"complaints","requirement_refs":["complaints-policy"],"source_refs":["mc-compliance"],"merchant_commitment_refs":["merchant-entity"],"text":"نستقبل الشكاوى عبر [قناة الشكاوى المعتمدة] ونرد خلال [مدة الرد المعتمدة].","variables":["قناة الشكاوى المعتمدة","مدة الرد المعتمدة"]}
+  ],
+  "manual_review":{"required":true,"reviewer_role":"مسؤول امتثال أو مستشار قانوني مؤهل","scope":"تأكيد التطبيق وصحة المسودات قبل النشر"}
+}

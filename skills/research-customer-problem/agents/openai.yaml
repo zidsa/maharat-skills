@@ -1,0 +1,4 @@
+interface:
+  display_name: "اكتشف وش المشكلة اللي يعاني منها عميلك"
+  short_description: "حوّل مقابلات العملاء إلى أدلة وقرار بحثي"
+  default_prompt: "استخدم $research-customer-problem لتصميم مقابلات محايدة وتحليل أدلة مشكلة عميل المتجر."

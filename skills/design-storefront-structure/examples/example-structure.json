@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "market": "السعودية",
+  "language": null,
+  "direction": null,
+  "customer": null,
+  "shopping_occasion": null,
+  "store_promise": null,
+  "shipping_policy": null,
+  "return_policy": null,
+  "design_status": "draft",
+  "decision": "needs_data",
+  "missing_inputs": ["language","direction","customer","shopping_occasion","store_promise","shipping_policy","return_policy","product_record"],
+  "product_record": {"status":"draft","artifact_ref":"outputs/product-record/product.json#record"},
+  "products": [
+    {"id":"cleanser-01","name":"غسول","primary_category":null,"primary_category_reason":"single_product_launch","included_in_launch":true},
+    {"id":"serum-01","name":"سيروم","primary_category":null,"included_in_launch":false}
+  ],
+  "categories": [],
+  "pages": [
+    {"id":"home","purpose":"توجيه مبدئي دون وعد مخترع","entry_points":["direct"],"primary_action":"فتح المنتج"},
+    {"id":"product","purpose":"عرض معلومات الغسول من سجل المنتج","entry_points":["home"],"primary_action":"إضافة للسلة"},
+    {"id":"cart","purpose":"مراجعة الطلب","entry_points":["product"],"primary_action":"بدء الدفع"},
+    {"id":"shipping_return","purpose":"عرض السياسات بعد اعتمادها","entry_points":["product","footer"],"primary_action":"العودة للمنتج"}
+  ],
+  "navigation": [
+    {"label":"الغسول","target":"product","reason":"منتج إطلاق واحد"},
+    {"label":"الشحن والاسترجاع","target":"shipping_return","reason":"معلومة لازمة للقرار"}
+  ],
+  "acceptance_scenarios": [
+    {"id":"find-product","start":"home","action":"افتح منتج الإطلاق","expected_observable":"الوصول إلى product من إجراء واضح"},
+    {"id":"compare-products","status":"not_applicable","reason":"منتج واحد ضمن الإطلاق"},
+    {"id":"find-shipping-and-return","start":"product","action":"ابحث عن الشحن والاسترجاع","expected_observable":"الوصول إلى صفحة السياسة قبل الدفع"}
+  ]
+}

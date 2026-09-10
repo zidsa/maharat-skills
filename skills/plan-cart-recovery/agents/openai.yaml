@@ -1,0 +1,4 @@
+interface:
+  display_name: "رجّع السلات المتروكة"
+  short_description: "ابنِ استرجاع سلة قصيرًا بوقف فوري بعد الشراء"
+  default_prompt: "استخدم $plan-cart-recovery لتجهيز استرجاع سلة بلا إزعاج أو خصم مختلق."
