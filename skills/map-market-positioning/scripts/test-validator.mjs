@@ -10,6 +10,7 @@ const skillDir = path.dirname(scriptDir);
 const validator = path.join(scriptDir, "validate-positioning-map.mjs");
 const base = JSON.parse(fs.readFileSync(path.join(skillDir, "examples/example-market.json"), "utf8"));
 // Keep the valid fixture current while the explicit past-due case still tests expiry.
+const shippedDueDate = base.next_test.due_date;
 base.next_test.due_date = new Date().toISOString().slice(0, 10);
 const clone = () => structuredClone(base);
 
@@ -64,6 +65,24 @@ for (const testCase of cases) {
     input: JSON.stringify(data),
     encoding: "utf8",
   });
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (result.status !== testCase.status || !output.includes(testCase.includes)) {
+    console.error(`FAIL ${testCase.name}\n${output}`);
+    process.exit(1);
+  }
+  console.log(`PASS ${testCase.name}`);
+}
+
+// The shipped example must pass as written on the day it was observed,
+// and must be reported as past due once that day has gone by.
+const shippedExample = path.join(skillDir, "examples/example-market.json");
+const shippedCases = [
+  { name: "shipped example on its own date", args: [`--as-of=${base.market_scope.observed_at}`], status: 0, includes: '"valid": true' },
+  { name: "shipped example after its due date", args: [`--as-of=${shippedDueDate.slice(0, 8)}${String(Number(shippedDueDate.slice(8)) + 1).padStart(2, "0")}`], status: 1, includes: "منقضٍ" },
+  { name: "malformed as-of date", args: ["--as-of=15-08-2026"], status: 2, includes: "YYYY-MM-DD" },
+];
+for (const testCase of shippedCases) {
+  const result = spawnSync(process.execPath, [validator, shippedExample, ...testCase.args], { encoding: "utf8" });
   const output = `${result.stdout}\n${result.stderr}`;
   if (result.status !== testCase.status || !output.includes(testCase.includes)) {
     console.error(`FAIL ${testCase.name}\n${output}`);
