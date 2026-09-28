@@ -24,7 +24,7 @@ description: ابنِ مواصفات صفحة منتج ومحتواها الجا
 node scripts/validate-product-page.mjs <product-page.json>
 ```
 
-11. سلّم المواصفات بقالب `assets/output-template.md`. بعد البناء الفعلي، سلّمه إلى `audit-mobile-rtl-accessibility`.
+11. سلّم المواصفات بقالب `assets/output-template.md`. بعد البناء الفعلي، افتح الصفحة من الجوال بالعربي وتحقق من ترتيب القراءة والسعر وزر الشراء قبل النشر.
 
 ## المدخلات الدنيا
 

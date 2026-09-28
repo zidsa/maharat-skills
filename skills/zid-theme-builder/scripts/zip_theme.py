@@ -17,11 +17,11 @@ import os
 import sys
 import zipfile
 
-EXCLUDE_DIRS = {"node_modules", ".git", ".github", "docs", "build", ".vscode", ".idea"}
+EXCLUDE_DIRS = {"node_modules", ".git", ".github", "docs", "build", ".vscode", ".idea", "tests", "test", "__tests__"}
 EXCLUDE_FILES = {
     "Makefile", "vite.config.js", "package.json", "package-lock.json",
     "README.md", ".gitignore", ".prettierrc", ".prettierignore", "msgfmt",
-    ".DS_Store", "Thumbs.db",
+    ".DS_Store", "Thumbs.db", ".env",
 }
 EXCLUDE_EXT = {".mo", ".pot", ".zip"}
 
@@ -37,7 +37,7 @@ def main():
         for root, dirs, files in os.walk(theme):
             dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
             for f in files:
-                if f in EXCLUDE_FILES or os.path.splitext(f)[1] in EXCLUDE_EXT:
+                if f in EXCLUDE_FILES or f.startswith(".env") or os.path.splitext(f)[1] in EXCLUDE_EXT:
                     continue
                 full = os.path.join(root, f)
                 arc = os.path.relpath(full, theme).replace(os.sep, "/")  # <-- the fix

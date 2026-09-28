@@ -1,0 +1,28 @@
+{
+  "store": { "url": "https://oud-alreef.zid.store", "name": "عود الريف" },
+  "decision_at": "2026-09-28T10:00:00+03:00",
+  "launch_at": "2026-10-01T18:00:00+03:00",
+  "vat_registered": true,
+  "paid_campaign_at_launch": false,
+  "checks": [
+    { "id": "products.catalog_ready", "status": "passed", "evidence": { "source": "zid_mcp", "detail": "12 منتجًا معروضًا، لكل منتج سعر وصورتان ووصف، ولا سعر صفري", "checked_at": "2026-09-27T19:00:00+03:00" } },
+    { "id": "products.stock_set", "status": "passed", "evidence": { "source": "zid_mcp", "detail": "منتجان نافدان مخفيان، والبقية بمخزون أكبر من صفر", "checked_at": "2026-09-27T19:00:00+03:00" } },
+    { "id": "products.options_complete", "status": "failed", "note": "عبوتا 50 و100 مل ظاهرتان لثلاثة منتجات بلا سعر مختلف", "fix": { "summary": "تسعير عبوة 100 مل للمنتجات الثلاثة", "owner": "صاحب المتجر", "due_at": "2026-10-04T18:00:00+03:00" } },
+    { "id": "payment.methods_active", "status": "passed", "evidence": { "source": "test_order", "detail": "ظهرت مدى وبطاقات ائتمانية والدفع عند الاستلام في صفحة الدفع", "checked_at": "2026-09-27T20:10:00+03:00" } },
+    { "id": "payment.test_order_paid", "status": "passed", "evidence": { "source": "test_order", "detail": "طلب #10452 بقيمة 29 ريالًا دُفع بمدى وظهر مدفوعًا في لوحة زد ثم استُرد", "checked_at": "2026-09-27T20:15:00+03:00" } },
+    { "id": "shipping.method_active", "status": "passed", "evidence": { "source": "test_order", "detail": "شحن للرياض وجدة والدمام بسعر 25 ريالًا ومدة 2-4 أيام ظاهرة قبل الدفع", "checked_at": "2026-09-27T20:12:00+03:00" } },
+    { "id": "shipping.fulfilment_tried", "status": "not_tested", "note": "لم تُنشأ بوليصة للطلب التجريبي بعد", "fix": { "summary": "إنشاء بوليصة تجريبية لطلب قادم قبل الشحن الفعلي", "owner": "مسؤول الشحن", "due_at": "2026-10-02T12:00:00+03:00" } },
+    { "id": "policies.returns_published", "status": "passed", "evidence": { "source": "public_url", "detail": "صفحة الاسترجاع توضح 7 أيام والشروط واستثناء العبوات المفتوحة", "checked_at": "2026-09-27T18:30:00+03:00" } },
+    { "id": "policies.shipping_published", "status": "passed", "evidence": { "source": "public_url", "detail": "صفحة الشحن توضح المدن والمدة والتكلفة", "checked_at": "2026-09-27T18:30:00+03:00" } },
+    { "id": "policies.contact_working", "status": "passed", "evidence": { "source": "merchant", "detail": "رقم واتساب في التذييل، أُرسلت رسالة تجريبية ووصل الرد خلال 10 دقائق", "checked_at": "2026-09-27T18:45:00+03:00" } },
+    { "id": "policies.business_identity", "status": "passed", "evidence": { "source": "public_url", "detail": "اسم المؤسسة ورقم السجل التجاري ظاهران في تذييل المتجر", "checked_at": "2026-09-27T18:30:00+03:00" } },
+    { "id": "policies.vat_display", "status": "passed", "evidence": { "source": "test_order", "detail": "الأسعار شاملة الضريبة، والرقم الضريبي ظاهر في فاتورة الطلب #10452", "checked_at": "2026-09-27T20:20:00+03:00" } },
+    { "id": "policies.privacy_published", "status": "passed", "evidence": { "source": "public_url", "detail": "صفحة الخصوصية منشورة وتوضح البيانات المجموعة وسببها", "checked_at": "2026-09-27T18:30:00+03:00" } },
+    { "id": "storefront.mobile_checkout", "status": "passed", "evidence": { "source": "test_order", "detail": "الطلب #10452 اكتمل من آيفون بالعربي دون نص مقطوع", "checked_at": "2026-09-27T20:15:00+03:00" } },
+    { "id": "storefront.navigation_works", "status": "passed", "evidence": { "source": "public_url", "detail": "الأقسام الثلاثة والبحث تعمل من الجوال", "checked_at": "2026-09-27T18:40:00+03:00" } },
+    { "id": "measurement.orders_visible", "status": "passed", "evidence": { "source": "zid_dashboard", "detail": "الطلب #10452 ظاهر في تقرير الطلبات بقيمة 29 ريالًا", "checked_at": "2026-09-27T20:30:00+03:00" } },
+    { "id": "measurement.ads_pixel", "status": "not_applicable" }
+  ],
+  "decision": "conditional_launch",
+  "rollback_plan": { "trigger": "فشل دفعين متتاليين أو طلب مكرر", "owner": "صاحب المتجر", "action": "إخفاء المنتجات مؤقتًا من لوحة زد ومراجعة بوابة الدفع قبل إعادة الفتح" }
+}

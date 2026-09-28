@@ -17,7 +17,7 @@ description: اجمع وقارن البدائل المباشرة وغير الم
 6. افصل الوقائع المرصودة عن الدرجات والتفسير. إذا لم يمكن التحقق من معلومة، اكتب `unknown`.
 7. اختبر أطروحة التموضع بالدليل المضاد: من لن يختارها؟ ومتى يتفوق البديل؟
 8. اكتب وعدًا محددًا يمكن إثباته الآن، وقائمة افتراضات غير مثبتة تحتاج اختبارًا.
-9. استخدم `assets/output-template.md` للتسليم، وشغّل `node scripts/validate-positioning-map.mjs <market.json>` عند توفر JSON.
+9. استخدم `assets/output-template.md` للتسليم، وشغّل `node scripts/validate-positioning-map.mjs <market.json>` عند توفر JSON. لفحص خريطة محفوظة كما كانت يوم كتابتها أضف `--as-of=YYYY-MM-DD`.
 
 ## المدخلات
 
