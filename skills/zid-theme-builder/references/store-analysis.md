@@ -8,14 +8,12 @@ The store's MCP endpoint is the **ZAM MCP server** (SSE transport). URL format:
 ```
 https://zam-mcp-server.zid.sa/mcp/<store-token>/sse
 ```
-The `<store-token>` is issued per store from the ZAM app in the Zid dashboard. **It is a credential** — the base64 token embeds the store's API keys, so it must NEVER be committed. This repo's `origin` remote is PUBLIC; a pushed token = leaked store credentials.
+The `<store-token>` is issued per store from the ZAM app in the Zid dashboard. **It is a credential**: the token embeds the store's API keys.
 
-**Where the live URL lives:** keep it in the gitignored file `references/.local/connector.txt` (this path is in `.gitignore`, so it stays on your machine and never reaches the repo). To set it up:
-```
-mkdir -p references/.local
-echo "https://zam-mcp-server.zid.sa/mcp/<your-store-token>/sse" > references/.local/connector.txt
-```
-Then attach the connector: `claude mcp add --transport sse zid "$(cat references/.local/connector.txt)"` (or paste the URL into the client's MCP settings UI), and verify with a cheap read call (`ListCategories`). If the token was ever committed/pushed, rotate it from the ZAM app immediately.
+- Ask the merchant to add the URL themselves in the assistant's connector settings (Claude: Settings → Connectors, or `claude mcp add --transport sse zid <url>` typed by the merchant in their own terminal). Then verify with a cheap read call such as `ListCategories`.
+- Never ask the merchant to paste the URL or token into the chat, never write it into any file of this skill or the theme, and never upload it as GPT knowledge.
+- If the token was ever pasted, saved or shared, the merchant should rotate it from the ZAM app immediately.
+- Without a connector, continue from the public storefront (Source 2); do not block the work.
 
 Search for and call read tools to profile the store:
 - `zid:ListProducts` / `zid:GetProductDetails` — product names, prices, images → what the store actually sells

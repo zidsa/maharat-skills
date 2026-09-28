@@ -1,5 +1,7 @@
 # Vitrin CLI & deployment
 
+> `push`, `install` and `activate` change the merchant's store. Run each one only after the merchant explicitly approves it in the conversation, and never add `-a` without a separate approval to activate.
+
 ## Install
 ```bash
 npm install -g @zidsa/vitrin-cli

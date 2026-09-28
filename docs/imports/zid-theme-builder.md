@@ -1,6 +1,30 @@
 # Zid Theme Builder import
 
-This package was copied unchanged at the repository owner's request.
+This package was first copied unchanged at the repository owner's request.
+Since 2026-09-28 it is maintained in this repository: at the owner's request it
+now carries the repository's `LICENSE.txt`, and it differs from upstream as
+listed under "Changes since import". The SHA-256 manifest below records the
+original import, not the current files.
+
+## Changes since import (2026-09-28, version `5.1.0-zid`)
+
+- `README.md`: removed the instructions that told agents to clone a personal
+  repository and to run `curl … | bash` or `irm … | iex` (those scripts were
+  missing upstream). Install now points only to this repository and the
+  skills.zid.sa page. The copyable request asks the agent not to upload or
+  activate anything without approval.
+- `SKILL.md`, `references/platform-adapter.md`, `references/cli-and-deploy.md`:
+  uploading (`vitrin push`/`preview`) needs the merchant's explicit approval,
+  and activating on the live store (`-a`/`activate`) needs a second, separate
+  approval. The skill no longer deploys automatically.
+- `references/store-analysis.md`: the store MCP token is added by the merchant
+  in the assistant's connector settings only. It is never pasted into the chat,
+  saved in skill or theme files, or uploaded as GPT knowledge.
+- `scripts/package_theme.sh`: the script folder is resolved before changing
+  into the theme folder, so the full-store audit runs and is no longer skipped
+  or broken when the script is called by a relative path. `.env*` files and
+  test folders are excluded from the ZIP (also in `scripts/zip_theme.py`).
+- `LICENSE.txt` added; `metadata.json` version set to `5.1.0-zid`.
 
 - Upstream repository: https://github.com/abdulrahmanx97/zid-ai-theme
 - Upstream commit: `b7039a48b7645b81654c0f3d7f89fa076763177a`
@@ -13,28 +37,11 @@ This package was copied unchanged at the repository owner's request.
 - Total file content: 175,162 bytes
 - All upstream file modes: `100644`
 
-## Preservation
+## Original import
 
-Every tracked upstream file is included byte-for-byte, including the README,
-metadata, ignore rules, references, and scripts. No skill instructions, companion
-files, attribution, or license terms were changed or added inside the package.
-This provenance record is intentionally outside the imported skill directory.
-
-The upstream repository does not contain a license file or declare a license in
-its skill metadata. This import does not assign a new license to those files.
-Do not infer that repository-wide licensing applies to the imported package.
-
-The upstream README references standalone installation scripts that are absent
-from the pinned source revision. The README remains unchanged. Install the
-complete package using the catalog's package command:
-
-```sh
-npx skills add https://github.com/zidsa/maharat-skills --skill zid-theme-builder
-```
-
-Import verification checks file names, file bytes, and file modes only. It does
-not execute the skill's scripts or assert that a generated theme has been built,
-installed, or activated on a store.
+At import time every tracked upstream file was included byte-for-byte, and
+upstream declared no license. Import verification checked file names, bytes and
+modes only; it did not execute the skill's scripts.
 
 ## SHA-256 manifest
 

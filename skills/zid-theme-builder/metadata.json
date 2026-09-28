@@ -1,7 +1,7 @@
 {
   "name": "zid-theme-builder",
   "description": "Build complete E2E custom Zid/Vitrin themes with store understanding, sector identity, merchant-friendly visual prompts, logical asset planning, validation, root-valid ZIP delivery, and optional Claude Code deployment.",
-  "version": "5.0.0-logical-visual-e2e",
+  "version": "5.1.0-zid",
   "platform": "zid",
   "entrypoint": "SKILL.md",
   "base_theme": "zidsa/growth-theme",

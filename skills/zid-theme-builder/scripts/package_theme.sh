@@ -5,6 +5,7 @@ set -euo pipefail
 
 DIR="${1:?Usage: package_theme.sh <theme-dir> [output.zip]}"
 OUT="${2:-$(basename "$DIR")-$(date +%Y-%m-%d).zip}"
+SKDIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
 fail() { echo "❌ $1"; exit 1; }
@@ -56,7 +57,6 @@ done
 ok "All schema JSON files parse"
 
 # --- 5.5 Full store audit (E2E completeness: required files, home not empty, images exist) ---
-SKDIR="$(cd "$(dirname "$0")" && pwd)"
 if command -v python3 >/dev/null 2>&1 && [ -f "$SKDIR/audit_full_store.py" ]; then
   python3 "$SKDIR/audit_full_store.py" "$(pwd)" || fail "Store audit failed — fix before packaging (see output above)"
 fi
@@ -72,7 +72,7 @@ if command -v zip >/dev/null 2>&1; then
        "*.mo" ".DS_Store" "*/.DS_Store" "npm-debug.log" ".vscode/*" \
        "Makefile" "vite.config.js" "package.json" "package-lock.json" \
        "README.md" "docs/*" ".gitignore" ".prettierrc*" "msgfmt/*" \
-       "art/*" "handover/*"
+       "art/*" "handover/*" ".env" ".env.*" "*/.env" "*/.env.*" "tests/*" "test/*" "__tests__/*"
 elif command -v python3 >/dev/null 2>&1; then
   warn "'zip' not found — using scripts/zip_theme.py (forward-slash safe)"
   python3 "$SKDIR/zip_theme.py" "$(pwd)" "../$OUT" || fail "zip_theme.py failed"
@@ -90,4 +90,4 @@ ok "Packaged + validated: ../$OUT ($SIZE)"
 echo ""
 echo "Upload paths:"
 echo "  A) Merchant: لوحة التحكم ← سوق الثيمات ← الثيمات المخصصة ← رفع ثيم جديد"
-echo "  B) Partner:  vitrin push -s <store> -a   (or Partner Dashboard → My Themes)"
+echo "  B) Partner:  vitrin push -s <store>   (only after the merchant approves; activation needs a second approval)"
