@@ -1,0 +1,42 @@
+{
+  "campaign": {
+    "store_url": "https://aldeerah-roastery.zid.store",
+    "landing_url": "https://aldeerah-roastery.zid.store/products/starter-kit",
+    "channel": "snapchat",
+    "objective": "طلبات شراء",
+    "creative_summary": "فيديو سناب عمودي 10 ثوانٍ مع صانعة محتوى: «طقم بداية القهوة المختصة بخصم 15% لين 10 أكتوبر»، والزر «اطلب الآن»",
+    "offer": { "type": "discount", "summary": "خصم 15% على طقم البداية: 199 ريالًا قبل الخصم و169 بعده شاملة الضريبة", "ends_at": "2026-10-10T23:59:00+03:00" },
+    "uses_influencer": true,
+    "stock_units": 120,
+    "starts_at": "2026-10-01T20:00:00+03:00"
+  },
+  "decision_at": "2026-09-28T11:00:00+03:00",
+  "budget": { "daily_cap_sar": 300, "total_cap_sar": 2100, "margin_per_order_sar": 70, "expected_orders": 35 },
+  "stop_rule": {
+    "max_cpa_sar": 60,
+    "spend_without_order_sar": 250,
+    "owner": "صاحب المتجر",
+    "action": "إيقاف المجموعة الإعلانية من مدير إعلانات سناب، ثم مراجعة الصفحة والقياس قبل أي إعادة تشغيل"
+  },
+  "test_order_id": null,
+  "checks": [
+    { "id": "offer.defined", "status": "passed", "evidence": { "source": "merchant", "detail": "التاجر أكد الخصم 15% على طقم البداية من 1 إلى 10 أكتوبر 2026، ويغطيه المخزون والهامش", "checked_at": "2026-09-28T10:00:00+03:00" } },
+    { "id": "offer.discount_licence", "status": "passed", "evidence": { "source": "merchant", "detail": "أرسل التاجر ترخيص تخفيض من وزارة التجارة يغطي طقم البداية من 2026-10-01 إلى 2026-10-10، ورمز QR للترخيص جاهز للإضافة", "checked_at": "2026-09-28T10:05:00+03:00" } },
+    { "id": "ad.policy_claims", "status": "passed", "evidence": { "source": "merchant", "detail": "راجعنا نص الفيديو: لا ادعاءات صحية أو «الأرخص»، والقهوة ليست فئة مقيدة في سياسة إعلانات سناب", "checked_at": "2026-09-28T10:20:00+03:00" } },
+    { "id": "ad.influencer_licence", "status": "passed", "evidence": { "source": "merchant", "detail": "رقم ترخيص موثوق لصانعة المحتوى أرسله التاجر، وتاريخ انتهائه 2027-03 بعد نهاية الحملة", "checked_at": "2026-09-28T10:25:00+03:00" } },
+    { "id": "landing.loads_right_page", "status": "passed", "evidence": { "source": "public_url", "detail": "الرابط يفتح صفحة طقم البداية مباشرة، لا الرئيسية ولا صفحة خطأ", "checked_at": "2026-09-28T10:30:00+03:00" } },
+    { "id": "landing.message_match", "status": "failed", "note": "الإعلان يعد بخصم 15%، والصفحة لا تذكر الخصم ولا مدته قبل السلة", "fix": { "summary": "إظهار «خصم 15% حتى 10 أكتوبر» أعلى صفحة الطقم وتفعيل الخصم التلقائي من لوحة زد قبل البدء", "owner": "صاحب المتجر" } },
+    { "id": "landing.price_matches", "status": "passed", "evidence": { "source": "public_url", "detail": "السعر 199 ريالًا شامل الضريبة في الصفحة ويطابق السعر قبل الخصم في الإعلان", "checked_at": "2026-09-28T10:30:00+03:00" } },
+    { "id": "landing.cta_to_checkout", "status": "passed", "evidence": { "source": "public_url", "detail": "زر «أضف للسلة» يضيف الطقم ويفتح السلة ثم صفحة الدفع دون أخطاء", "checked_at": "2026-09-28T10:35:00+03:00" } },
+    { "id": "landing.mobile_rtl", "status": "passed", "evidence": { "source": "merchant", "detail": "ثلاث لقطات من آيفون بالعربي: النص من اليمين، لا قص أفقي، والزر ظاهر دون تمرير طويل", "checked_at": "2026-09-28T10:40:00+03:00" } },
+    { "id": "stock.covers_campaign", "status": "passed", "evidence": { "source": "zid_dashboard", "detail": "قراءة ProductStock من ربط زد: 120 وحدة من طقم البداية، والطلب المتوقع 35", "checked_at": "2026-09-28T10:10:00+03:00" } },
+    { "id": "measurement.pixel_installed", "status": "passed", "evidence": { "source": "zid_dashboard", "detail": "تطبيق إعلانات سناب شات مثبت ومفعّل في متجر زد ومرتبط بحساب الإعلانات نفسه", "checked_at": "2026-09-28T10:45:00+03:00" } },
+    { "id": "measurement.purchase_event_verified", "status": "not_tested", "note": "لم يُنفذ طلب اختبار بعد، فلا دليل أن حدث الشراء يصل إلى سناب", "fix": { "summary": "طلب حقيقي صغير على المتجر ثم فحص حدث الشراء في أداة أحداث سناب بقيمته وعملته، ثم إلغاؤه أو استرداده", "owner": "صاحب المتجر" } },
+    { "id": "measurement.zid_order_visible", "status": "not_tested", "note": "ينتظر طلب الاختبار نفسه", "fix": { "summary": "التأكد أن طلب الاختبار ظاهر في طلبات زد وتقاريرها بالقيمة نفسها التي وصلت لسناب", "owner": "صاحب المتجر" } },
+    { "id": "budget.daily_cap_set", "status": "passed", "evidence": { "source": "ads_platform", "detail": "لقطة من مسودة الحملة في مدير إعلانات سناب: حد يومي 300 ريال وتاريخ انتهاء 7 أكتوبر", "checked_at": "2026-09-28T10:50:00+03:00" } },
+    { "id": "landing.policies_visible", "status": "failed", "note": "لا رابط لسياسة الاسترجاع في صفحة الطقم، والرابط موجود في التذييل فقط", "fix": { "summary": "إضافة سطر «الاسترجاع خلال 7 أيام» برابط السياسة تحت زر الشراء", "owner": "صاحب المتجر", "due_at": "2026-09-30T18:00:00+03:00" } },
+    { "id": "ad.creative_specs", "status": "passed", "evidence": { "source": "merchant", "detail": "فيديو عمودي 9:16 مدته 10 ثوانٍ، والنص العربي داخل المنطقة الآمنة ولا يغطيه الزر", "checked_at": "2026-09-28T10:20:00+03:00" } },
+    { "id": "ops.support_ready", "status": "passed", "evidence": { "source": "merchant", "detail": "موظف يرد على واتساب المتجر من 4 العصر إلى 12 الليل طوال أيام الحملة", "checked_at": "2026-09-28T10:55:00+03:00" } }
+  ],
+  "decision": "fix_first"
+}
