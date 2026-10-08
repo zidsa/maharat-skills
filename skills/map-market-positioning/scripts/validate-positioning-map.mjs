@@ -2,9 +2,17 @@
 
 import fs from "node:fs";
 
-const inputPath = process.argv[2];
+// --as-of=YYYY-MM-DD checks a saved map against the day it was written;
+// without it, the map is checked against today.
+const asOfArg = process.argv.slice(2).find((arg) => arg.startsWith("--as-of="));
+const inputPath = process.argv.slice(2).find((arg) => !arg.startsWith("--as-of="));
 if (!inputPath) {
-  console.error("الاستخدام: node scripts/validate-positioning-map.mjs <market.json|->");
+  console.error("الاستخدام: node scripts/validate-positioning-map.mjs <market.json|-> [--as-of=YYYY-MM-DD]");
+  process.exit(2);
+}
+const asOf = asOfArg?.slice("--as-of=".length);
+if (asOf !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(asOf)) {
+  console.error("--as-of يجب أن يكون بصيغة YYYY-MM-DD");
   process.exit(2);
 }
 
@@ -17,7 +25,7 @@ try {
 }
 
 const errors = [];
-const today = new Date().toISOString().slice(0, 10);
+const today = asOf ?? new Date().toISOString().slice(0, 10);
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const requiredText = (value, label, min = 4) => {
   if (typeof value !== "string" || value.trim().length < min) errors.push(`${label} مفقود أو مختصر جدًا`);

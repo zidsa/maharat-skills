@@ -8,13 +8,13 @@ This skill's logic is platform-neutral; only the CAPABILITIES differ. At the sta
 2. **Shell/filesystem** available? → git clone, npm build, magick compositing, package_theme.sh, ZIP assembly.
 3. **Image generation** available natively? → run Path C prompts yourself, save with exact filenames.
 4. **Video generation** available? → same for VIDEO_PROMPTS entries.
-5. **vitrin CLI** authenticated? → automated deploy.
+5. **vitrin CLI** authenticated? → upload only after the merchant explicitly approves, and activate only after a second explicit approval.
 
 ## Behavior matrix
 
 | Platform | Typical capabilities | Behavior |
 |---|---|---|
-| **Claude Code** (terminal/desktop) | shell + MCP + vitrin CLI possible; no native image gen | Full pipeline: harvest via MCP, composite via magick/SVG, build, package, `vitrin push`. Missing art → prompt pack + SVG placeholders; user round-trips generated files back. |
+| **Claude Code** (terminal/desktop) | shell + MCP + vitrin CLI possible; no native image gen | Full pipeline: harvest via MCP, composite via magick/SVG, build, package, then `vitrin push` only after the merchant approves. Missing art → prompt pack + SVG placeholders; user round-trips generated files back. |
 | **claude.ai** (web, no shell) | MCP connectors possible; no shell, no image gen | Build theme files in-conversation, ship SVG placeholders + full prompt packs, assemble ZIP, deliver with UPLOAD_INSTRUCTIONS.md. NEVER claim to have uploaded or generated raster images. |
 | **ChatGPT** | image generation + code interpreter (zip); no Zid MCP, no vitrin | Generate Path C images DIRECTLY with exact filenames, place into `assets/images/`, zip via code interpreter. Store data comes from the live storefront URL only. |
 | **Gemini** | image + video generation; no Zid MCP, no vitrin | Generate images AND hero-loop videos directly per the packs, honor ≤10MB video limit, assemble ZIP if the environment allows — else deliver assets + instructions. |

@@ -1,4 +1,58 @@
 {
-  "previous":{"days":30,"sessions":2000,"orders":80,"gross_item_revenue":18400,"gross_revenue_basis":"item_revenue_before_discounts_excluding_tax","discounts":800,"matured_refunds":300,"shipping_revenue":400,"tax_collected":0,"variable_costs":11200,"currency":"SAR","cohort_end":"2026-06-30","measurement_end":"2026-07-30","refund_maturity_days":30,"source":"orders-export-v1"},
-  "current":{"days":30,"sessions":2100,"orders":80,"gross_item_revenue":20600,"gross_revenue_basis":"item_revenue_before_discounts_excluding_tax","discounts":1300,"matured_refunds":700,"shipping_revenue":380,"tax_collected":0,"variable_costs":12600,"currency":"SAR","cohort_end":"2026-07-02","measurement_end":"2026-08-01","refund_maturity_days":30,"source":"orders-export-v1"}
+  "store": "بن الديرة",
+  "as_of": "2026-09-28",
+  "currency": "SAR",
+  "sales_basis": "قيمة المنتجات في الطلبات غير الملغاة قبل ضريبة القيمة المضافة وبدون الشحن",
+  "data_sources": {
+    "orders": "zid_mcp",
+    "sessions": "zid_analytics_export",
+    "stock_history": "merchant_file"
+  },
+  "periods": {
+    "previous": { "start": "2026-08-18", "end": "2026-08-31", "sessions": 12000, "orders": 240, "sales": 60000, "returns": 1800 },
+    "current": { "start": "2026-09-01", "end": "2026-09-14", "sessions": 11700, "orders": 195, "sales": 47775, "returns": 1500 }
+  },
+  "seasonality_note": "الفترة السابقة فيها يوم صرف الرواتب (27 أغسطس) والحالية لا تحتويه. قارنّا المنتجات الأخرى وحدها: تراجعت 2.6٪ فقط، فأثر الراتب موجود لكنه لا يفسر معظم الفرق.",
+  "by_source": [
+    { "source": "Instagram", "paid": false, "previous": { "sessions": 4000 }, "current": { "sessions": 3900 } },
+    { "source": "Snapchat Ads", "paid": true, "previous": { "sessions": 3000 }, "current": { "sessions": 2900 } },
+    { "source": "Google organic", "paid": false, "previous": { "sessions": 2000 }, "current": { "sessions": 2100 } },
+    { "source": "Direct", "paid": false, "previous": { "sessions": 1500 }, "current": { "sessions": 1450 } },
+    { "source": "WhatsApp", "paid": false, "previous": { "sessions": 1000 }, "current": { "sessions": 900 } },
+    { "source": "مصادر أخرى", "paid": false, "other": true, "previous": { "sessions": 500 }, "current": { "sessions": 450 } }
+  ],
+  "by_product": [
+    { "product": "بن سيدامو 250غ", "previous": { "units": 300, "sales": 21000, "out_of_stock_days": 0, "returns": 600 }, "current": { "units": 140, "sales": 9800, "out_of_stock_days": 6, "returns": 300 } },
+    { "product": "بن خولاني 250غ", "previous": { "units": 150, "sales": 12000, "out_of_stock_days": 0, "returns": 400 }, "current": { "units": 155, "sales": 12400, "out_of_stock_days": 0, "returns": 400 } },
+    { "product": "أدوات التقطير", "previous": { "units": 60, "sales": 9000, "out_of_stock_days": 0, "returns": 300 }, "current": { "units": 52, "sales": 7800, "out_of_stock_days": 0, "returns": 300 } },
+    { "product": "باقي المنتجات", "other": true, "previous": { "sales": 18000, "returns": 500 }, "current": { "sales": 17775, "returns": 500 } }
+  ],
+  "diagnosis": {
+    "status": "diagnosed",
+    "main_driver": "conversion",
+    "contributions": { "sessions": -1361.67, "conversion": -9776.67, "aov": -1086.67, "returns": 300 },
+    "drilldown": [
+      { "driver": "conversion", "by": "product", "key": "بن سيدامو 250غ" }
+    ],
+    "cause_type": "stockout",
+    "cause": "نفاد بن سيدامو 250غ ستة أيام من أربعة عشر: الزوار وصلوا تقريبًا بنفس العدد لكن المنتج الأكثر مبيعًا لم يكن متاحًا للشراء.",
+    "evidence": [
+      "نسبة التحويل نزلت من 2.00٪ إلى 1.67٪ وهي وحدها تفسر 9,777 ريالًا من فرق 11,925 ريالًا (82٪).",
+      "مبيعات بن سيدامو نزلت 11,200 ريال، وهذا 92٪ من نزول المبيعات قبل المرتجعات.",
+      "أيام نفاد بن سيدامو 6 في الفترة الحالية مقابل 0 في السابقة، وسعر الوحدة ثابت عند 70 ريالًا.",
+      "باقي المنتجات مجتمعة نزلت 1,025 ريالًا فقط (2.6٪)."
+    ],
+    "counter_evidence": [
+      "حتى في أيام التوفر الثمانية كان بيع سيدامو اليومي 17.5 وحدة مقابل 21.4 سابقًا؛ جزء من التراجع ليس نفادًا.",
+      "الفترة السابقة فيها يوم صرف الرواتب والحالية لا؛ هذا يضغط المبيعات قليلًا في كل المنتجات.",
+      "لا نعرف عدد من فتح صفحة سيدامو وقت النفاد، لأن مشاهدات المنتج غير متاحة من ربط زد."
+    ],
+    "missing_data": [
+      "مشاهدات صفحة بن سيدامو يوميًا من تحليلات زد أو GA4، لمعرفة كم زائرًا وجد المنتج نافدًا.",
+      "تاريخ وصول الشحنة القادمة من المورد ومهلته."
+    ],
+    "unknown": ["product_views"],
+    "next_step": "ابدأ بخطة إعادة طلب بن سيدامو قبل نفاده القادم، ثم قارن أسبوعين كاملين من التوفر بأسبوعين مثلهما لترى هل يعود التحويل إلى 2٪.",
+    "handoff": "plan-inventory-reorder"
+  }
 }

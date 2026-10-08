@@ -97,7 +97,7 @@ bash scripts/package_theme.sh <theme-dir>  # validate + clean package → <name>
 Packaging precondition: the image-walk QA gate in `references/images.md` must PASS first (re-run it now — it can only fully run once sections exist; use its no-deploy variant on the ZIP-only path), and the image audit table (slot → source → action → file → size) must be included in the delivery summary.
 
 Then deploy according to environment:
-- **Claude Code / terminal available + vitrin CLI authenticated:** deploy automatically — `vitrin push -s <store> -a` (or `vitrin preview <dev-store-id>` first). If not logged in, run `vitrin login` (opens the user's browser) then push. This is the fully automated path.
+- **Claude Code / terminal available + vitrin CLI authenticated:** first hand over the ZIP and a short summary, then ask the merchant whether to upload. Only after an explicit yes in this conversation, run `vitrin preview <dev-store-id>` on a dev store or `vitrin push -s <store>` **without** `-a`. Activating the theme on the live store (`-a` or `vitrin activate`) changes what every customer sees, so it needs a second, separate explicit approval; never activate on your own. If not logged in, ask the merchant to run `vitrin login` (it opens their browser).
 - **claude.ai / no CLI auth possible:** present the ZIP file to the user with the exact manual path: لوحة التحكم ← سوق الثيمات ← الثيمات المخصصة ← رفع ثيم جديد (requires Professional plan or the paid custom-theme service). Never claim to have uploaded when only the ZIP was produced.
 
 ## Live documentation lookups

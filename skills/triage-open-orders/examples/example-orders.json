@@ -1,0 +1,99 @@
+{
+  "store": { "name": "محمصة النخلة (متجر تجريبي)", "handling_hours": 48 },
+  "as_of": "2026-09-28T09:00:00+03:00",
+  "source": "zid_mcp",
+  "orders": [
+    { "id": "61540090", "created_at": "2026-09-22T12:10:00+03:00", "order_status": "delivered", "payment_method": "mada", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-09-26T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": "delivered", "customer_request": null, "total_sar": 142 },
+    { "id": "61540095", "created_at": "2026-09-25T17:45:00+03:00", "order_status": "cancelled", "payment_method": "credit_card", "payment_status": "pending", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": null, "promise_source": null, "tracking_status": null, "customer_request": null, "total_sar": 88 },
+    { "id": "61540101", "created_at": "2026-09-23T14:05:00+03:00", "order_status": "indelivery", "payment_method": "mada", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-09-27T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": "in_transit", "customer_request": { "type": "status_inquiry", "since": "2026-09-27T20:10:00+03:00", "answered": false }, "total_sar": 214 },
+    { "id": "61540102", "created_at": "2026-09-21T10:30:00+03:00", "order_status": "indelivery", "payment_method": "credit_card", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-09-26T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": "picked_up", "customer_request": null, "total_sar": 96 },
+    { "id": "61540103", "created_at": "2026-09-26T16:40:00+03:00", "order_status": "ready", "payment_method": "bank_transfer", "payment_status": "pending", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-09-30T23:59:00+03:00", "promise_source": "store_policy", "tracking_status": null, "customer_request": null, "total_sar": 318 },
+    { "id": "61540104", "created_at": "2026-09-27T14:00:00+03:00", "order_status": "preparing", "payment_method": "mada", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "short", "stock_note": "HR-250 رصيده في ProductStock سالب (-2) في المستودع الرئيسي", "promised_by": "2026-10-01T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": null, "total_sar": 165 },
+    { "id": "61540105", "created_at": "2026-09-27T18:30:00+03:00", "order_status": "new", "payment_method": "apple_pay", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "short", "stock_note": "نفس الرمز HR-250", "promised_by": "2026-10-01T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": null, "total_sar": 110 },
+    { "id": "61540106", "created_at": "2026-09-26T08:00:00+03:00", "order_status": "new", "payment_method": "mada", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-09-30T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": null, "total_sar": 74 },
+    { "id": "61540107", "created_at": "2026-09-26T11:00:00+03:00", "order_status": "preparing", "payment_method": "cod", "payment_status": "pending", "cod_confirmed": true, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-09-28T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": null, "total_sar": 129 },
+    { "id": "61540108", "created_at": "2026-09-28T07:40:00+03:00", "order_status": "new", "payment_method": "cod", "payment_status": "pending", "cod_confirmed": false, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-10-02T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": null, "total_sar": 58 },
+    { "id": "61540109", "created_at": "2026-09-28T06:10:00+03:00", "order_status": "new", "payment_method": "credit_card", "payment_status": "pending", "cod_confirmed": null, "is_potential_fraud": true, "stock": "ok", "promised_by": "2026-10-02T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": null, "total_sar": 1240 },
+    { "id": "61540110", "created_at": "2026-09-27T09:15:00+03:00", "order_status": "ready", "payment_method": "mada", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-10-01T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": { "type": "change_request", "since": "2026-09-27T22:00:00+03:00", "answered": false }, "total_sar": 92 },
+    { "id": "61540111", "created_at": "2026-09-26T13:00:00+03:00", "order_status": "indelivery", "payment_method": "stc_pay", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-09-29T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": "out_for_delivery", "customer_request": null, "total_sar": 187 },
+    { "id": "61540112", "created_at": "2026-09-28T08:20:00+03:00", "order_status": "new", "payment_method": "mada", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "unknown", "promised_by": null, "promise_source": null, "tracking_status": null, "customer_request": null, "total_sar": 63 },
+    { "id": "61540113", "created_at": "2026-09-27T20:00:00+03:00", "order_status": "ready", "payment_method": "mada", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-10-02T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": null, "total_sar": 146 },
+    { "id": "61540114", "created_at": "2026-09-27T16:00:00+03:00", "order_status": "preparing", "payment_method": "cod", "payment_status": "pending", "cod_confirmed": true, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-10-01T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": null, "customer_request": null, "total_sar": 77 },
+    { "id": "61540115", "created_at": "2026-09-26T19:30:00+03:00", "order_status": "indelivery", "payment_method": "mada", "payment_status": "paid", "cod_confirmed": null, "is_potential_fraud": false, "stock": "ok", "promised_by": "2026-09-30T23:59:00+03:00", "promise_source": "zid_estimated_delivery", "tracking_status": "in_transit", "customer_request": null, "total_sar": 205 }
+  ],
+  "plan": {
+    "orders": [
+      { "order_id": "61540101", "category": "promise_missed", "missing": [] },
+      { "order_id": "61540102", "category": "promise_missed", "missing": [] },
+      { "order_id": "61540103", "category": "payment_shipping_risk", "missing": [] },
+      { "order_id": "61540104", "category": "stock_short", "missing": [] },
+      { "order_id": "61540105", "category": "stock_short", "missing": [] },
+      { "order_id": "61540106", "category": "promise_at_risk", "missing": [] },
+      { "order_id": "61540107", "category": "promise_at_risk", "missing": [] },
+      { "order_id": "61540108", "category": "payment_hold", "missing": [] },
+      { "order_id": "61540109", "category": "payment_hold", "missing": [] },
+      { "order_id": "61540110", "category": "customer_waiting", "missing": [] },
+      { "order_id": "61540111", "category": "normal", "missing": [] },
+      { "order_id": "61540112", "category": "normal", "missing": ["promised_by", "stock"] },
+      { "order_id": "61540113", "category": "normal", "missing": [] },
+      { "order_id": "61540114", "category": "normal", "missing": [] },
+      { "order_id": "61540115", "category": "normal", "missing": [] }
+    ],
+    "top_actions": [
+      {
+        "rank": 1,
+        "category": "promise_missed",
+        "order_ids": ["61540102", "61540101"],
+        "action": "راجع تتبع الشحنتين المتأخرتين مع الناقل واطلب موعد تسليم مؤكدًا",
+        "owner": "فهد (الشحن)",
+        "deadline": "2026-09-28T11:00:00+03:00",
+        "safe_step": "افتح رابط التتبع لكل شحنة من صفحة الطلب في لوحة زد، وسجّل آخر حركة ووقتها قبل أي تواصل مع العميل",
+        "why": "العميلان دفعا وفات موعد التسليم الموعود (بيومين ويوم)، فالضرر قائم الآن، وأحدهما سأل عن طلبه أمس",
+        "handoff": "detect-shipping-delay"
+      },
+      {
+        "rank": 2,
+        "category": "payment_shipping_risk",
+        "order_ids": ["61540103"],
+        "action": "أوقف تسليم الطلب للناقل حتى تتأكد من وصول الحوالة البنكية",
+        "owner": "صاحب المتجر (الدفع)",
+        "deadline": "2026-09-28T10:30:00+03:00",
+        "safe_step": "طابق مبلغ 318 ريالًا في كشف الحساب البنكي مع إيصال الحوالة المرفق في الطلب، ولا تُخرج الشحنة قبل ذلك",
+        "why": "الطلب جاهز للشحن ودفعه ما زال معلّقًا؛ إن خرج قبل التأكد قد تخسر البضاعة والمبلغ معًا",
+        "handoff": null
+      },
+      {
+        "rank": 3,
+        "category": "stock_short",
+        "order_ids": ["61540104", "61540105"],
+        "action": "احسم نقص الرمز HR-250 لطلبين مدفوعين: توريد اليوم أو بديل يوافق عليه العميل",
+        "owner": "فهد (التجهيز)",
+        "deadline": "2026-09-28T13:00:00+03:00",
+        "safe_step": "عدّ الرف فعليًا للرمز HR-250 واسأل المورد عن توريد اليوم، ثم اعرض عليّ القرار قبل أي تواصل مع العميلين",
+        "why": "العميلان دفعا والمنتج غير متوفر، وموعدهما بعد 3 أيام؛ الحسم اليوم يمنع تحوّلهما إلى تأخير",
+        "handoff": "plan-inventory-reorder"
+      }
+    ],
+    "drafts": [
+      {
+        "order_ids": ["61540102"],
+        "purpose": "اعتذار عن تأخر التسليم بعد التحقق من التتبع",
+        "text": "مرحبًا، بخصوص طلبك رقم 61540102: نعتذر عن تأخر وصوله عن الموعد المتوقع. نتابع الشحنة الآن مع شركة الشحن، وسنرسل لك موعد التسليم المؤكد اليوم قبل [الوقت]. إذا احتجت أي شيء فنحن هنا.",
+        "status": "draft_needs_approval"
+      },
+      {
+        "order_ids": ["61540101"],
+        "purpose": "رد على سؤال العميل عن حالة الطلب المتأخر",
+        "text": "مرحبًا، شكرًا لتواصلك بخصوص طلبك رقم 61540101. الطلب مع شركة الشحن وتأخر عن الموعد المتوقع، ونعتذر عن ذلك. نتابعه الآن وسنبلغك بموعد التسليم المؤكد اليوم قبل [الوقت].",
+        "status": "draft_needs_approval"
+      },
+      {
+        "order_ids": ["61540104", "61540105"],
+        "purpose": "إبلاغ بنقص منتج، تُستخدم فقط إذا تعذر التوريد اليوم",
+        "text": "مرحبًا، بخصوص طلبك رقم [رقم الطلب]: نفد المنتج [اسم المنتج] مؤقتًا. نستطيع [الخيار المعتمد: توفيره بتاريخ … أو استبداله بـ …]. أخبرنا بما يناسبك، ولن نغيّر شيئًا في طلبك قبل موافقتك.",
+        "status": "draft_needs_approval"
+      }
+    ],
+    "not_done": "المساعد لم يغيّر حالة أي طلب، ولم يلغِ أو يسترد أي مبلغ، ولم يرسل أي رسالة. المسودات تنتظر موافقتك."
+  }
+}

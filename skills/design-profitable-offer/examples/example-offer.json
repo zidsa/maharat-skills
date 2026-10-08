@@ -1,0 +1,75 @@
+{
+  "store": { "name": "محمصة درب البن", "url": "https://darb-albun.zid.store" },
+  "analysis_date": "2026-09-28",
+  "currency": "SAR",
+  "vat": { "registered": true, "prices_include_vat": true },
+  "stated_basis": "net_of_vat",
+  "baseline": {
+    "label": "طلب معتاد: كيسان من بن 250 غ",
+    "unit_price": 69,
+    "units_per_order": 2,
+    "shipping_charged": 25,
+    "costs": {
+      "unit_cost": 24,
+      "shipping_cost": 21,
+      "packaging_cost": 3,
+      "payment_fee_pct": 2,
+      "payment_fee_fixed": 1,
+      "other_variable_cost": 0
+    },
+    "cost_source": "التاجر: فاتورة المحمصة وعقد شركة الشحن وكشف بوابة الدفع لشهر أغسطس، والتكاليف بلا ضريبة لأنها قابلة للاسترداد",
+    "stated_margin": 65.48
+  },
+  "margin_floor": 55,
+  "history": {
+    "available": true,
+    "source": "zid_orders",
+    "orders_last_28_days": 180,
+    "share_orders_goods_at_or_above_200": 0.08,
+    "note": "قراءة من Orders في زد للفترة 2026-08-31 إلى 2026-09-27؛ لا توجد عروض سابقة للمقارنة"
+  },
+  "offers": [
+    { "id": "pct10", "type": "percent_discount", "label": "خصم 10% على السلة", "value": 10, "stated_margin": 53.76, "stated_break_even_uplift_pct": 21.81 },
+    { "id": "fixed15", "type": "fixed_discount", "label": "خصم 15 ريال على السلة من 138 ريال", "value": 15, "min_goods_value": 138, "stated_margin": 52.74, "stated_break_even_uplift_pct": 24.16 },
+    { "id": "fs200", "type": "free_shipping", "label": "شحن مجاني للسلة من 200 ريال", "min_goods_value": 200, "units_per_order": 3, "stated_margin": 78.86, "stated_break_even_uplift_pct": -16.97, "stated_same_basket_margin": 100.1, "stated_upgrade_share_pct": 61.35 },
+    { "id": "bundle3", "type": "bundle", "label": "باقة 3 أكياس بسعر 179 ريال", "units_per_order": 3, "bundle_price": 179, "stated_margin": 76.31, "stated_break_even_uplift_pct": -14.19, "stated_same_basket_margin": 100.1, "stated_upgrade_share_pct": 68.71 },
+    { "id": "price65", "type": "price_change", "label": "خفض سعر الكيس إلى 65 ريال", "new_unit_price": 65, "stated_margin": 58.68, "stated_break_even_uplift_pct": 11.58 }
+  ],
+  "test": {
+    "offer_id": "fs200",
+    "start_date": "2026-10-04",
+    "end_date": "2026-10-17",
+    "scope": "كل المتجر، كل مدن الشحن الحالية، دون جمعه مع أي كوبون آخر",
+    "success_metric": "مجموع هامش المساهمة خلال 14 يومًا لا يقل عن 5,893 ريال (90 طلبًا × 65.48 ريال)، ونسبة الطلبات من 200 ريال فأكثر ترتفع من 8% إلى 21% على الأقل",
+    "stop_condition": "أوقف الكوبون فورًا إذا نزل هامش المساهمة في أي أسبوع عن 2,650 ريال (90% من خط الأساس الأسبوعي 2,947)، أو تجاوزت تكلفة الشحن الفعلية 21 ريالًا للطلب، أو تأخر التجهيز أكثر من يومي عمل",
+    "zid_setup": {
+      "tool": "Coupons",
+      "status": "draft_awaiting_approval",
+      "fields": {
+        "name": "اختبار شحن مجاني من 200",
+        "applying_method": "AUTOMATIC",
+        "free_shipping": true,
+        "total": 200,
+        "apply_to": "all",
+        "date_start": "2026-10-04",
+        "date_end": "2026-10-17"
+      },
+      "verify_before_approval": "توثيق زد يصف total بأنه قيمة السلة قبل الشحن والضريبة؛ جرّب سلة بقيمة 199 و207 في المعاينة، وإن كانت المقارنة قبل الضريبة فاجعل total يساوي 173.91"
+    }
+  },
+  "pre_launch_checks": [
+    {
+      "id": "moc_discount_licence",
+      "status": "to_verify",
+      "note": "الاختبار المختار شحن مجاني لا يخفض سعر المنتج، لكن المقارنة تضمنت خصومات. قبل الإعلان عن أي خصم أو تخفيض تحقق من اشتراط ترخيص التخفيضات من وزارة التجارة، وتحقق هل يشمل الاشتراط عروض الشحن المجاني",
+      "source": "https://mc.gov.sa/ar/eservices/Pages/ServiceDetails.aspx?sID=46"
+    }
+  ],
+  "approvals_needed": [
+    "تأكيد أن تكلفة شركة الشحن 21 ريالًا للطلب لكل المدن الحالية",
+    "اعتماد مسودة الكوبون التلقائي في زد بتاريخ 2026-10-04 إلى 2026-10-17 قبل إنشائه",
+    "اعتماد شرط التوقف، وأن صاحب المتجر هو من يوقف الكوبون عند تحققه",
+    "نتيجة التحقق من اشتراط ترخيص التخفيضات قبل أي نسخة فيها خصم",
+    "نص إعلان العرض: شحن مجاني للطلبات من 200 ريال حتى 17 أكتوبر، دون عبارات ندرة"
+  ]
+}
